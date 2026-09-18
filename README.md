@@ -1,4 +1,4 @@
-﻿# Writely
+# Writely
 
 <p align="center">
   <img src="public/icons/icon.svg" alt="Writely Logo" width="96" height="96" style="border-radius: 20px;" />
@@ -14,6 +14,10 @@
   <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js" alt="Next.js"></a>
   <a href="https://tailwindcss.com"><img src="https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS"></a>
   <a href="https://dexie.org"><img src="https://img.shields.io/badge/IndexedDB-Dexie.js-orange?style=for-the-badge" alt="Dexie.js"></a>
+</p>
+
+<p align="center">
+  <a href="https://usewritely.vercel.app"><strong>🚀 Live App: https://usewritely.vercel.app</strong></a>
 </p>
 
 <p align="center">

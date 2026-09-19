@@ -19,6 +19,7 @@ import {
   ArrowRight,
   Tag,
   Sparkles,
+  RotateCcw,
 } from 'lucide-react';
 
 interface MobileHomeScreenProps {
@@ -29,6 +30,7 @@ interface MobileHomeScreenProps {
   onToggleFavorite: (id: string) => void;
   onToggleArchive: (id: string) => void;
   onDeleteNote: (id: string) => void;
+  onRestoreNote?: (id: string) => void;
   onDeleteTag?: (tag: string) => void;
   selectedTag?: string | null;
   onSelectTag?: (tag: string | null) => void;
@@ -129,6 +131,7 @@ export default function MobileHomeScreen({
   onToggleFavorite,
   onToggleArchive,
   onDeleteNote,
+  onRestoreNote,
   onDeleteTag,
   selectedTag: propSelectedTag,
   onSelectTag,
@@ -734,40 +737,78 @@ export default function MobileHomeScreen({
                                 onClick={(e) => e.stopPropagation()}
                                 className="absolute right-0 top-7.5 z-50 w-44 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] shadow-2xl py-1.5 text-xs text-[var(--text-main)] animate-ios-pinch-pop ring-1 ring-black/10 dark:ring-white/10"
                               >
-                                <button
-                                  onClick={() => {
-                                    onToggleFavorite(note.id);
-                                    setMenuNoteId(null);
-                                  }}
-                                  className="w-full text-left px-3.5 py-2 hover:bg-[var(--bg-card-hover)] flex items-center gap-2.5 transition-colors"
-                                >
-                                  <Star className={`w-3.5 h-3.5 ${note.favorite ? 'fill-amber-400 text-amber-400' : ''}`} />
-                                  <span>{note.favorite ? 'Remove Favorite' : 'Mark as Favorite'}</span>
-                                </button>
+                                {note.isDeleted ? (
+                                  <>
+                                    {onRestoreNote && (
+                                      <button
+                                        onClick={() => {
+                                          onRestoreNote(note.id);
+                                          setMenuNoteId(null);
+                                        }}
+                                        className="w-full text-left px-3.5 py-2 hover:bg-[var(--bg-card-hover)] flex items-center gap-2.5 transition-colors font-medium text-[var(--accent-main)]"
+                                      >
+                                        <RotateCcw className="w-3.5 h-3.5" />
+                                        <span>Restore Note</span>
+                                      </button>
+                                    )}
 
-                                <button
-                                  onClick={() => {
-                                    onToggleArchive(note.id);
-                                    setMenuNoteId(null);
-                                  }}
-                                  className="w-full text-left px-3.5 py-2 hover:bg-[var(--bg-card-hover)] flex items-center gap-2.5 transition-colors"
-                                >
-                                  <Archive className="w-3.5 h-3.5" />
-                                  <span>{note.isArchived ? 'Unarchive Note' : 'Archive Note'}</span>
-                                </button>
+                                    <div className="my-1 border-t border-[var(--border-subtle)]/60" />
 
-                                <div className="my-1 border-t border-[var(--border-subtle)]/60" />
+                                    <button
+                                      onClick={() => {
+                                        onDeleteNote(note.id);
+                                        setMenuNoteId(null);
+                                      }}
+                                      className="w-full text-left px-3.5 py-2 hover:bg-[var(--danger-subtle)] flex items-center gap-2.5 text-[var(--danger-main)] transition-colors font-semibold"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <span>Delete Forever</span>
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        onToggleFavorite(note.id);
+                                        setMenuNoteId(null);
+                                      }}
+                                      className="w-full text-left px-3.5 py-2 hover:bg-[var(--bg-card-hover)] flex items-center gap-2.5 transition-colors"
+                                    >
+                                      <Star
+                                        className={`w-3.5 h-3.5 ${
+                                          note.favorite
+                                            ? 'fill-amber-400 text-amber-400'
+                                            : 'text-[var(--text-muted)]'
+                                        }`}
+                                      />
+                                      <span>{note.favorite ? 'Remove Favorite' : 'Mark as Favorite'}</span>
+                                    </button>
 
-                                <button
-                                  onClick={() => {
-                                    onDeleteNote(note.id);
-                                    setMenuNoteId(null);
-                                  }}
-                                  className="w-full text-left px-3.5 py-2 hover:bg-[var(--danger-subtle)] flex items-center gap-2.5 text-[var(--danger-main)] transition-colors"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  <span>{note.isDeleted ? 'Delete Forever' : 'Move to Trash'}</span>
-                                </button>
+                                    <button
+                                      onClick={() => {
+                                        onToggleArchive(note.id);
+                                        setMenuNoteId(null);
+                                      }}
+                                      className="w-full text-left px-3.5 py-2 hover:bg-[var(--bg-card-hover)] flex items-center gap-2.5 transition-colors"
+                                    >
+                                      <Archive className="w-3.5 h-3.5" />
+                                      <span>{note.isArchived ? 'Unarchive Note' : 'Archive Note'}</span>
+                                    </button>
+
+                                    <div className="my-1 border-t border-[var(--border-subtle)]/60" />
+
+                                    <button
+                                      onClick={() => {
+                                        onDeleteNote(note.id);
+                                        setMenuNoteId(null);
+                                      }}
+                                      className="w-full text-left px-3.5 py-2 hover:bg-[var(--danger-subtle)] flex items-center gap-2.5 text-[var(--danger-main)] transition-colors"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <span>Move to Trash</span>
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </>
                           )}

@@ -287,6 +287,28 @@ export default function WritelyApp() {
     setActiveNoteId(nextActive ? nextActive.id : null);
   }, [notes, reloadNotes]);
 
+  // Delete or permanently delete note from card popup / list action
+  const handleDeleteNoteFromList = useCallback(
+    (id: string) => {
+      const note = notes.find((n) => n.id === id);
+      if (!note) return;
+
+      if (note.isDeleted) {
+        // Trashed note -> prompt for permanent deletion confirmation modal
+        setDeleteModalConfig({
+          isOpen: true,
+          mode: 'permanent',
+          noteId: id,
+          noteTitle: note.title,
+        });
+      } else {
+        // Active note -> move to trash
+        handleMoveToTrash(id);
+      }
+    },
+    [notes, handleMoveToTrash]
+  );
+
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   // Delete a tag from all notes
@@ -422,7 +444,8 @@ export default function WritelyApp() {
             onCreateNote={handleCreateNote}
             onToggleFavorite={handleToggleFavorite}
             onToggleArchive={handleToggleArchive}
-            onDeleteNote={handleMoveToTrash}
+            onDeleteNote={handleDeleteNoteFromList}
+            onRestoreNote={handleRestoreNote}
             onDeleteTag={handleRequestDeleteTag}
             selectedTag={selectedTag}
             onSelectTag={setSelectedTag}

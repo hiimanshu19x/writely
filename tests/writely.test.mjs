@@ -345,4 +345,17 @@ assert.ok(!mobileScreenSource.includes("const DEFAULT_TAGS ="), 'DEFAULT_TAGS co
 assert.ok(!mobileScreenSource.includes("note.tags[0] : 'personal'"), 'No fallback to personal in note card tags');
 console.log('✓ Test 14 Passed: Verified no phantom tag fallbacks or resurrecting DEFAULT_TAGS.');
 
+// 15. Verify Trashed Note 3-Dot Popup Actions (Delete Forever & Restore Note)
+console.log('Test 15: Trashed Note 3-Dot Popup Actions');
+assert.ok(mobileScreenSource.includes('onRestoreNote &&'), 'Provides onRestoreNote handler for trashed notes');
+assert.ok(mobileScreenSource.includes('note.isDeleted ? ('), 'Differentiates actions for trashed notes');
+assert.ok(mobileScreenSource.includes('<span>Delete Forever</span>'), 'Has Delete Forever button text');
+assert.ok(mobileScreenSource.includes('<span>Restore Note</span>'), 'Has Restore Note button text');
+
+const pageSource = fs.readFileSync(path.resolve('./src/app/page.tsx'), 'utf8');
+assert.ok(pageSource.includes('handleDeleteNoteFromList'), 'page.tsx implements handleDeleteNoteFromList');
+assert.ok(pageSource.includes("mode: 'permanent'"), 'Prompts permanent modal when note is already trashed');
+
+console.log('✓ Test 15 Passed: Trashed note 3-dot popup actions verified.');
+
 console.log('\n--- ALL VERIFICATION TESTS PASSED SUCCESSFULLY! ---');

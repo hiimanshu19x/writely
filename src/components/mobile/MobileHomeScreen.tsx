@@ -717,79 +717,88 @@ export default function MobileHomeScreen({
         <Plus className="w-6 h-6 stroke-[2.5]" />
       </button>
 
-      {/* 7. ALL TAGS COLORFUL CANVAS POPUP MODAL (BLURRED BACKGROUND) */}
+      {/* 7. ALL TAGS MODERN IOS NATIVE BOTTOM SHEET MODAL (BLURRED FROSTED BACKDROP) */}
       {isTagsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
           {/* Intense frosted blurred backdrop */}
           <div
-            className="absolute inset-0 bg-black/45 dark:bg-black/65 backdrop-blur-xl transition-opacity cursor-pointer"
+            className="absolute inset-0 bg-black/45 dark:bg-black/70 backdrop-blur-xl transition-opacity cursor-pointer"
             onClick={() => setIsTagsModalOpen(false)}
           />
 
-          {/* Floating Colorful Canvas Card */}
+          {/* iOS Floating Bottom Sheet Card */}
           <div
-            className="relative w-full sm:max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-3xl bg-[var(--bg-card)] border border-[var(--border-subtle)] shadow-2xl flex flex-col overflow-hidden z-10 animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-200"
+            className="relative w-full sm:max-w-md max-h-[82vh] rounded-t-[32px] sm:rounded-3xl bg-[var(--bg-card)] border border-[var(--border-subtle)] shadow-2xl flex flex-col overflow-hidden z-10 animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-200"
             style={{
               fontFamily: 'var(--font-sf-pro, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", sans-serif)',
             }}
           >
-            {/* Modal Header */}
-            <div className="p-5 pb-3.5 border-b border-[var(--border-subtle)] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[var(--accent-main)]/10 text-[var(--accent-main)] flex items-center justify-center shadow-xs">
-                  <Tag className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold text-[var(--text-main)] leading-none">
-                      All Tags
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--accent-main)]/15 text-[var(--accent-main)]">
-                      {availableTags.length} tags
-                    </span>
-                  </div>
-                  <p className="text-xs text-[var(--text-muted)] mt-1 font-normal">
-                    Filter notes by category or topic
-                  </p>
-                </div>
-              </div>
+            {/* iOS Top Grabber Handle */}
+            <div className="w-10 h-1 rounded-full bg-[var(--text-muted)]/30 mx-auto mt-3 mb-1 shrink-0" />
 
-              <button
-                onClick={() => setIsTagsModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-[var(--bg-card-hover)] hover:bg-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] flex items-center justify-center transition-colors"
-                title="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+            {/* Sticky Fixed Header & Integrated Search Bar */}
+            <div className="px-5 pt-2 pb-3.5 border-b border-[var(--border-subtle)] space-y-3 shrink-0 bg-[var(--bg-card)]">
+              {/* Header Title Row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <h3 className="text-xl font-bold tracking-tight text-[var(--text-main)] leading-none">
+                    Tags
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--bg-app)] border border-[var(--border-subtle)] text-[var(--text-muted)]">
+                    {availableTags.length}
+                  </span>
+                </div>
 
-            {/* Quick search input if more than 4 tags */}
-            {availableTags.length > 4 && (
-              <div className="px-5 pt-3">
-                <div className="w-full h-10 rounded-xl bg-[var(--bg-app)] border border-[var(--border-subtle)] px-3 flex items-center gap-2 text-xs focus-within:ring-2 focus-within:ring-[var(--accent-main)]/20">
-                  <Search className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" />
-                  <input
-                    type="text"
-                    value={tagSearchQuery}
-                    onChange={(e) => setTagSearchQuery(e.target.value)}
-                    placeholder="Search tags..."
-                    className="w-full bg-transparent text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none"
-                  />
-                  {tagSearchQuery && (
+                <div className="flex items-center gap-2">
+                  {selectedTag && (
                     <button
-                      onClick={() => setTagSearchQuery('')}
-                      className="p-1 text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                      onClick={() => {
+                        setSelectedTag(null);
+                        setIsTagsModalOpen(false);
+                      }}
+                      className="text-xs font-semibold text-[var(--danger-main)] hover:opacity-80 px-2 py-1 transition-opacity"
                     >
-                      <X className="w-3 h-3" />
+                      Clear
                     </button>
                   )}
+
+                  <button
+                    onClick={() => setIsTagsModalOpen(false)}
+                    className="w-7 h-7 rounded-full bg-[var(--bg-card-hover)] text-[var(--text-muted)] hover:text-[var(--text-main)] flex items-center justify-center active:scale-90 transition-all"
+                    title="Close"
+                  >
+                    <X className="w-4 h-4 stroke-[2.5]" />
+                  </button>
                 </div>
               </div>
-            )}
 
-            {/* Colorful Canvas Grid */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-3 max-h-[52vh]">
-              <div className="grid grid-cols-2 gap-2.5">
+              {/* iOS Native Search Field */}
+              <div className="w-full h-10 rounded-xl bg-[var(--bg-app)] border border-[var(--border-subtle)] px-3.5 flex items-center gap-2.5 text-xs focus-within:ring-2 focus-within:ring-[var(--accent-main)]/20 transition-all">
+                <Search className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" />
+                <input
+                  type="text"
+                  value={tagSearchQuery}
+                  onChange={(e) => setTagSearchQuery(e.target.value)}
+                  placeholder="Search tags..."
+                  className="w-full bg-transparent text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)] outline-none"
+                />
+                {tagSearchQuery && (
+                  <button
+                    onClick={() => setTagSearchQuery('')}
+                    className="p-1 rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Scrollable Colorful Tag Cloud (Pills Flow Layout - No Stuck Cards) */}
+            <div
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              className="flex-1 overflow-y-auto p-5 no-scrollbar max-h-[50vh]"
+            >
+              <div className="flex flex-wrap gap-2.5">
                 {modalFilteredTags.map((tag) => {
                   const style = getTagStyle(tag);
                   const isSelected = selectedTag === tag;
@@ -806,76 +815,62 @@ export default function MobileHomeScreen({
                       }}
                       style={{
                         backgroundColor: isDarkTheme ? style.darkBg : style.bg,
-                        border: isSelected ? `2px solid ${stripeColor}` : isDarkTheme ? '1.5px solid transparent' : `1.5px solid ${style.border}`,
+                        color: isDarkTheme ? style.darkText : style.text,
+                        border: isSelected
+                          ? `2px solid ${stripeColor}`
+                          : isDarkTheme
+                          ? '1.5px solid transparent'
+                          : `1.5px solid ${style.border}`,
                       }}
-                      className={`relative p-3.5 rounded-2xl flex flex-col justify-between text-left transition-all duration-200 active:scale-95 shadow-xs hover:shadow-md ${
-                        isSelected ? 'shadow-sm' : ''
+                      className={`h-10 px-4 rounded-full flex items-center gap-2 text-xs font-semibold tracking-wide transition-all duration-200 active:scale-95 shadow-xs hover:shadow-sm shrink-0 ${
+                        isSelected ? 'shadow-md scale-[1.03]' : 'opacity-95 hover:opacity-100'
                       }`}
                     >
-                      {/* Top row: tag accent dot & selected checkmark */}
-                      <div className="flex items-center justify-between gap-1 mb-2.5">
-                        <div
-                          style={{ backgroundColor: stripeColor }}
-                          className="w-2.5 h-2.5 rounded-full ring-2 ring-white/50 dark:ring-black/50"
-                        />
-                        {isSelected ? (
-                          <div
-                            style={{ backgroundColor: stripeColor }}
-                            className="w-4 h-4 rounded-full text-white flex items-center justify-center text-[9px] font-bold shadow-xs"
-                          >
-                            ✓
-                          </div>
-                        ) : null}
-                      </div>
+                      {/* Left Vibrant Accent Dot */}
+                      <span
+                        style={{ backgroundColor: stripeColor }}
+                        className="w-2 h-2 rounded-full shrink-0"
+                      />
 
                       {/* Tag Name */}
+                      <span>#{tag}</span>
+
+                      {/* Note Count Badge Pill */}
                       <span
-                        style={{ color: isDarkTheme ? style.darkText : style.text }}
-                        className="font-bold text-sm truncate tracking-tight"
+                        style={{
+                          backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
+                          color: isDarkTheme ? style.darkText : style.text,
+                        }}
+                        className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
                       >
-                        #{tag}
+                        {count}
                       </span>
 
-                      {/* Note Count Badge */}
-                      <span
-                        style={{ color: isDarkTheme ? style.darkText : style.text }}
-                        className="text-[11px] opacity-75 mt-0.5 font-medium"
-                      >
-                        {count} {count === 1 ? 'note' : 'notes'}
-                      </span>
+                      {/* Selected Checkmark */}
+                      {isSelected && (
+                        <span className="text-[11px] font-bold ml-0.5">✓</span>
+                      )}
                     </button>
                   );
                 })}
               </div>
 
               {modalFilteredTags.length === 0 && (
-                <div className="py-8 text-center text-xs text-[var(--text-muted)] italic">
+                <div className="py-12 text-center text-xs text-[var(--text-muted)] italic">
                   No tags match "{tagSearchQuery}".
                 </div>
               )}
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--bg-app)]/40 flex items-center justify-between gap-3">
-              {selectedTag ? (
-                <button
-                  onClick={() => {
-                    setSelectedTag(null);
-                    setIsTagsModalOpen(false);
-                  }}
-                  className="px-3.5 py-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-xs font-semibold text-[var(--danger-main)] transition-colors active:scale-95"
-                >
-                  Clear Filter
-                </button>
-              ) : (
-                <span className="text-[11px] text-[var(--text-muted)]">
-                  Showing all active topics
-                </span>
-              )}
+            {/* Modal Bottom Bar */}
+            <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--bg-app)]/40 flex items-center justify-between gap-3 shrink-0">
+              <span className="text-xs text-[var(--text-muted)]">
+                {selectedTag ? `Filtered by #${selectedTag}` : 'Tap any tag to filter'}
+              </span>
 
               <button
                 onClick={() => setIsTagsModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[var(--accent-main)] text-[var(--accent-contrast)] text-xs font-bold shadow-xs hover:opacity-95 transition-opacity ml-auto active:scale-95"
+                className="px-5 py-2 rounded-xl bg-[var(--accent-main)] text-[var(--accent-contrast)] text-xs font-bold shadow-xs hover:opacity-95 transition-opacity active:scale-95"
               >
                 Done
               </button>

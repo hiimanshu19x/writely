@@ -175,21 +175,131 @@ export const INITIAL_SEED_NOTE: Note = {
   },
 };
 
+export const STARTER_NOTES: Note[] = [
+  {
+    ...INITIAL_SEED_NOTE,
+    tags: ['personal'],
+  },
+  {
+    id: 'project-ideas',
+    title: 'Project ideas',
+    createdAt: Date.now() - 1000 * 60 * 60 * 5,
+    updatedAt: Date.now() - 1000 * 60 * 60 * 2,
+    favorite: false,
+    isDeleted: false,
+    deletedAt: null,
+    tags: ['work'],
+    plainText: 'A collection of ideas to explore this month. Focus on simplicity, not features.',
+    content: {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: 'A collection of ideas to explore this month. Focus on simplicity, not features.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'travel-plans',
+    title: 'Travel plans',
+    createdAt: Date.now() - 1000 * 60 * 60 * 26,
+    updatedAt: Date.now() - 1000 * 60 * 60 * 14,
+    favorite: false,
+    isDeleted: false,
+    deletedAt: null,
+    tags: ['travel'],
+    plainText: 'Places to visit, things to do, experiences to have. Keep adding to this list...',
+    content: {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: 'Places to visit, things to do, experiences to have. Keep adding to this list...',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'book-notes',
+    title: 'Book notes',
+    createdAt: Date.now() - 1000 * 60 * 60 * 96,
+    updatedAt: Date.now() - 1000 * 60 * 60 * 72,
+    favorite: false,
+    isDeleted: false,
+    deletedAt: null,
+    tags: ['books'],
+    plainText: 'Notes and highlights from books I\'m reading. Key takeaways, favorite quotes, lessons...',
+    content: {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: 'Notes and highlights from books I\'m reading. Key takeaways, favorite quotes, lessons...',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'workout-routine',
+    title: 'Workout routine',
+    createdAt: Date.now() - 1000 * 60 * 60 * 144,
+    updatedAt: Date.now() - 1000 * 60 * 60 * 120,
+    favorite: true,
+    isDeleted: false,
+    deletedAt: null,
+    tags: ['personal'],
+    plainText: 'Be consistent. Progress over perfection. Small steps every day.',
+    content: {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: 'Be consistent. Progress over perfection. Small steps every day.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+];
+
 let isInitializing = false;
 let isInitialized = false;
 
-// Ensure seed note exists on first load
+// Ensure seed notes exist on first load
 export async function initializeDatabase(): Promise<void> {
   if (typeof window === 'undefined') return;
   if (isInitialized || isInitializing) return;
   isInitializing = true;
 
   try {
-    const existing = await db.notes.get(INITIAL_SEED_NOTE.id);
-    if (!existing) {
-      const count = await db.notes.count();
-      if (count === 0) {
-        await db.notes.put(INITIAL_SEED_NOTE);
+    const count = await db.notes.count();
+    if (count === 0) {
+      await db.notes.bulkPut(STARTER_NOTES);
+    } else if (count === 1) {
+      const existing = await db.notes.get(INITIAL_SEED_NOTE.id);
+      if (existing) {
+        const others = STARTER_NOTES.filter((n) => n.id !== INITIAL_SEED_NOTE.id);
+        await db.notes.bulkPut(others);
       }
     }
     isInitialized = true;

@@ -17,6 +17,7 @@ import {
   enablePersistentStorage,
 } from '@/lib/storage';
 import Sidebar from '@/components/sidebar/Sidebar';
+import MobileHomeScreen from '@/components/mobile/MobileHomeScreen';
 import Editor from '@/components/editor/Editor';
 import EditorHeader from '@/components/editor/EditorHeader';
 import CommandPalette from '@/components/modals/CommandPalette';
@@ -35,8 +36,8 @@ export default function WritelyApp() {
   const [autosaveStatus, setAutosaveStatus] = useState<'saving' | 'saved' | 'idle'>('saved');
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Responsive mobile view: 'list' | 'editor'
-  const [mobileView, setMobileView] = useState<'list' | 'editor'>('editor');
+  // Responsive mobile view: 'home' | 'editor'
+  const [mobileView, setMobileView] = useState<'home' | 'editor'>('home');
   const [isMobile, setIsMobile] = useState(false);
 
   // Sidebar open / closed state
@@ -209,9 +210,12 @@ export default function WritelyApp() {
       if (activeNoteId === id) {
         const nextActive = updated.find((n) => !n.isDeleted);
         setActiveNoteId(nextActive ? nextActive.id : null);
+        if (isMobile) {
+          setMobileView('home');
+        }
       }
     },
-    [activeNoteId, reloadNotes]
+    [activeNoteId, reloadNotes, isMobile]
   );
 
   // Restore note from trash
@@ -323,15 +327,33 @@ export default function WritelyApp() {
       {/* APP OPENING LAUNCH ANIMATION */}
       <AppSplashScreen currentTheme={theme} />
 
-      {/* DESKTOP SIDEBAR / MOBILE LIST VIEW */}
-      {(!isMobile || mobileView === 'list') && (
+      {/* MOBILE HOME SCREEN (DEDICATED DASHBOARD) */}
+      {isMobile && mobileView === 'home' && (
+        <div className="w-full h-full">
+          <MobileHomeScreen
+            notes={notes}
+            activeNoteId={activeNoteId}
+            onSelectNote={handleSelectNote}
+            onCreateNote={handleCreateNote}
+            onToggleFavorite={handleToggleFavorite}
+            onDeleteNote={handleMoveToTrash}
+            currentFilter={currentFilter}
+            onChangeFilter={setCurrentFilter}
+            currentTheme={theme}
+            onChangeTheme={handleChangeTheme}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+            onOpenStats={() => setIsInfoOpen(true)}
+            onOpenEditor={() => setMobileView('editor')}
+          />
+        </div>
+      )}
+
+      {/* DESKTOP SIDEBAR */}
+      {!isMobile && (
         <div
           className={`${
-            isMobile
-              ? 'w-full h-full'
-              : sidebarOpen
-              ? 'w-72 lg:w-80 h-full'
-              : 'hidden'
+            sidebarOpen ? 'w-72 lg:w-80 h-full' : 'hidden'
           } shrink-0 transition-all duration-200`}
         >
           <Sidebar
@@ -412,7 +434,7 @@ export default function WritelyApp() {
                   }
                 }}
                 isMobile={isMobile}
-                onBackToMobileList={() => setMobileView('list')}
+                onBackToMobileList={() => setMobileView('home')}
                 isFormattingOpen={isFormattingOpen}
                 onToggleFormatting={() => setIsFormattingOpen((prev) => !prev)}
               />

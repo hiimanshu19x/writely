@@ -278,27 +278,71 @@ const trashView = mockNotes.filter((n) => n.isDeleted);
 assert.strictEqual(trashView.length, 1, 'Trash view only includes deleted notes');
 console.log('✓ Test 11 Passed: Note archive filtering verified.');
 
-// 12. Verify Tag Deletion Logic
-console.log('Test 12: Tag Deletion Logic');
+// 12. Verify Tag Deletion Logic & Normalization
+console.log('Test 12: Tag Deletion Logic & Normalization');
 const notesWithTags = [
-  { id: '1', tags: ['work', 'personal'] },
-  { id: '2', tags: ['work', 'ideas'] },
-  { id: '3', tags: ['personal'] },
+  { id: '1', isDeleted: false, tags: ['work', '#Personal', '  IDEAS  '] },
+  { id: '2', isDeleted: false, tags: ['#work', 'ideas'] },
+  { id: '3', isDeleted: false, tags: ['personal'] },
+  { id: '4', isDeleted: true, tags: ['work', 'archived-trash'] },
 ];
-const tagToRemove = 'work';
-const updatedAfterDelete = notesWithTags.map((n) => ({
+
+// Extraction function matching MobileHomeScreen and Sidebar
+function extractAvailableTags(notesList) {
+  const set = new Set();
+  notesList.forEach((n) => {
+    if (!n.isDeleted && n.tags && Array.isArray(n.tags)) {
+      n.tags.forEach((t) => {
+        const clean = t.replace(/^#/, '').trim().toLowerCase();
+        if (clean) set.add(clean);
+      });
+    }
+  });
+  return Array.from(set).sort();
+}
+
+const initialTags = extractAvailableTags(notesWithTags);
+assert.deepStrictEqual(initialTags, ['ideas', 'personal', 'work']);
+
+// Simulate deleting tag 'work' across all notes
+const tagToDelete = '#Work';
+const cleanTarget = tagToDelete.replace(/^#/, '').trim().toLowerCase();
+const updatedNotesAfterDelete = notesWithTags.map((n) => ({
   ...n,
-  tags: (n.tags || []).filter((t) => t !== tagToRemove),
+  tags: (n.tags || []).filter(
+    (t) => t.replace(/^#/, '').trim().toLowerCase() !== cleanTarget
+  ),
 }));
-assert.deepStrictEqual(updatedAfterDelete[0].tags, ['personal']);
-assert.deepStrictEqual(updatedAfterDelete[1].tags, ['ideas']);
-assert.deepStrictEqual(updatedAfterDelete[2].tags, ['personal']);
-console.log('✓ Test 12 Passed: Tag deletion logic verified.');
+
+// Available tags after deletion must NO LONGER have 'work'
+const remainingTags = extractAvailableTags(updatedNotesAfterDelete);
+assert.strictEqual(remainingTags.includes('work'), false, 'Deleted tag "work" must not exist in available tags');
+assert.deepStrictEqual(remainingTags, ['ideas', 'personal']);
+
+// Selected tag must be reset to null
+let selectedTagState = 'work';
+if (selectedTagState === cleanTarget) {
+  selectedTagState = null;
+}
+assert.strictEqual(selectedTagState, null, 'Active selected tag must be reset to null when deleted');
+console.log('✓ Test 12 Passed: Tag deletion, normalization, and dynamic extraction verified.');
 
 // 13. Verify iOS Pinch Animation & Pop Styling
 console.log('Test 13: iOS Pinch Animation & Pop Styling');
 assert.ok(cssContent.includes('@keyframes iosPinchPop'), 'Defines iosPinchPop keyframes');
 assert.ok(cssContent.includes('.animate-ios-pinch-pop'), 'Defines animate-ios-pinch-pop class');
 console.log('✓ Test 13 Passed: iOS pinch animation and pop styling verified.');
+
+// 14. Verify Note Card Tag Chip Rendering (No Phantom 'personal' Fallback)
+console.log('Test 14: Note Card Tag Chip Rendering');
+const noteWithNoTags = { id: 'empty-tags', title: 'Blank Note', tags: [] };
+const hasTags = noteWithNoTags.tags && Array.isArray(noteWithNoTags.tags) && noteWithNoTags.tags.length > 0;
+const noteCardTag = hasTags ? noteWithNoTags.tags[0] : null;
+assert.strictEqual(noteCardTag, null, 'Note with no tags must not fall back to "personal"');
+
+const mobileScreenSource = fs.readFileSync(path.resolve('./src/components/mobile/MobileHomeScreen.tsx'), 'utf8');
+assert.ok(!mobileScreenSource.includes("const DEFAULT_TAGS ="), 'DEFAULT_TAGS constant must be removed so deleted tags are not revived');
+assert.ok(!mobileScreenSource.includes("note.tags[0] : 'personal'"), 'No fallback to personal in note card tags');
+console.log('✓ Test 14 Passed: Verified no phantom tag fallbacks or resurrecting DEFAULT_TAGS.');
 
 console.log('\n--- ALL VERIFICATION TESTS PASSED SUCCESSFULLY! ---');

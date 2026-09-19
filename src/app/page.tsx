@@ -287,31 +287,44 @@ export default function WritelyApp() {
     setActiveNoteId(nextActive ? nextActive.id : null);
   }, [notes, reloadNotes]);
 
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
   // Delete a tag from all notes
   const handleDeleteTag = useCallback(
     async (tagToDelete: string) => {
       const cleanTarget = tagToDelete.replace(/^#/, '').trim().toLowerCase();
-      const affectedNotes = notes.filter(
+      if (!cleanTarget) return;
+
+      // Always query all notes directly from IndexedDB to avoid React closure staleness
+      const allNotes = await db.notes.toArray();
+      const affectedNotes = allNotes.filter(
         (n) =>
           n.tags &&
+          Array.isArray(n.tags) &&
           n.tags.some((t) => t.replace(/^#/, '').trim().toLowerCase() === cleanTarget)
       );
 
-      await Promise.all(
-        affectedNotes.map((note) => {
-          const newTags = (note.tags || []).filter(
-            (t) => t.replace(/^#/, '').trim().toLowerCase() !== cleanTarget
-          );
-          return db.notes.update(note.id, {
-            tags: newTags,
-            updatedAt: Date.now(),
-          });
-        })
-      );
+      if (affectedNotes.length > 0) {
+        await Promise.all(
+          affectedNotes.map((note) => {
+            const newTags = (note.tags || []).filter(
+              (t) => t.replace(/^#/, '').trim().toLowerCase() !== cleanTarget
+            );
+            return db.notes.update(note.id, {
+              tags: newTags,
+              updatedAt: Date.now(),
+            });
+          })
+        );
+      }
 
+      // Immediately clear active tag selection so the user is never stuck in a deleted tag view
+      setSelectedTag(null);
+
+      // Reload fresh notes from DB to update state everywhere
       await reloadNotes();
     },
-    [notes, reloadNotes]
+    [reloadNotes]
   );
 
   // Request tag deletion confirmation modal
@@ -411,8 +424,13 @@ export default function WritelyApp() {
             onToggleArchive={handleToggleArchive}
             onDeleteNote={handleMoveToTrash}
             onDeleteTag={handleRequestDeleteTag}
+            selectedTag={selectedTag}
+            onSelectTag={setSelectedTag}
             currentFilter={currentFilter}
-            onChangeFilter={setCurrentFilter}
+            onChangeFilter={(filter) => {
+              setCurrentFilter(filter);
+              setSelectedTag(null);
+            }}
             currentTheme={theme}
             onChangeTheme={handleChangeTheme}
             onOpenSettings={() => setIsSettingsOpen(true)}
@@ -438,8 +456,13 @@ export default function WritelyApp() {
             onToggleFavorite={handleToggleFavorite}
             onToggleArchive={handleToggleArchive}
             onDeleteTag={handleRequestDeleteTag}
+            selectedTag={selectedTag}
+            onSelectTag={setSelectedTag}
             currentFilter={currentFilter}
-            onChangeFilter={setCurrentFilter}
+            onChangeFilter={(filter) => {
+              setCurrentFilter(filter);
+              setSelectedTag(null);
+            }}
             currentTheme={theme}
             onChangeTheme={handleChangeTheme}
             onOpenSettings={() => setIsSettingsOpen(true)}
@@ -638,14 +661,15 @@ export default function WritelyApp() {
         count={deleteModalConfig.count}
         onClose={() => setDeleteModalConfig((prev) => ({ ...prev, isOpen: false }))}
         onConfirm={() => {
-          if (deleteModalConfig.mode === 'trash' && deleteModalConfig.noteId) {
-            handleMoveToTrash(deleteModalConfig.noteId);
-          } else if (deleteModalConfig.mode === 'permanent' && deleteModalConfig.noteId) {
-            handlePermanentlyDelete(deleteModalConfig.noteId);
-          } else if (deleteModalConfig.mode === 'emptyTrash') {
+          const config = deleteModalConfig;
+          if (config.mode === 'trash' && config.noteId) {
+            handleMoveToTrash(config.noteId);
+          } else if (config.mode === 'permanent' && config.noteId) {
+            handlePermanentlyDelete(config.noteId);
+          } else if (config.mode === 'emptyTrash') {
             handleEmptyTrash();
-          } else if (deleteModalConfig.mode === 'deleteTag' && deleteModalConfig.tagToDelete) {
-            handleDeleteTag(deleteModalConfig.tagToDelete);
+          } else if (config.mode === 'deleteTag' && config.tagToDelete) {
+            handleDeleteTag(config.tagToDelete);
           }
         }}
       />

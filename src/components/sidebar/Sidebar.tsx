@@ -31,6 +31,8 @@ interface SidebarProps {
   onToggleFavorite: (id: string) => void;
   onToggleArchive?: (id: string) => void;
   onDeleteTag?: (tag: string) => void;
+  selectedTag?: string | null;
+  onSelectTag?: (tag: string | null) => void;
   currentFilter: NoteFilter;
   onChangeFilter: (filter: NoteFilter) => void;
   currentTheme: ThemeId;
@@ -48,6 +50,8 @@ export default function Sidebar({
   onToggleFavorite,
   onToggleArchive,
   onDeleteTag,
+  selectedTag: propSelectedTag,
+  onSelectTag,
   currentFilter,
   onChangeFilter,
   currentTheme,
@@ -57,18 +61,29 @@ export default function Sidebar({
   onToggleCollapse,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [internalSelectedTag, setInternalSelectedTag] = useState<string | null>(null);
+  const selectedTag = propSelectedTag !== undefined ? propSelectedTag : internalSelectedTag;
+  const setSelectedTag = (tag: string | null) => {
+    if (onSelectTag) {
+      onSelectTag(tag);
+    } else {
+      setInternalSelectedTag(tag);
+    }
+  };
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
 
   // Extract all distinct tags from non-deleted notes
   const availableTags = useMemo(() => {
     const set = new Set<string>();
     notes
-      .filter((n) => !n.isDeleted)
+      .filter((n) => !n.isDeleted && n.tags && Array.isArray(n.tags))
       .forEach((n) => {
-        (n.tags || []).forEach((t) => set.add(t));
+        n.tags.forEach((t) => {
+          const clean = t.replace(/^#/, '').trim().toLowerCase();
+          if (clean) set.add(clean);
+        });
       });
-    return Array.from(set);
+    return Array.from(set).sort();
   }, [notes]);
 
   // Counts
@@ -84,12 +99,9 @@ export default function Sidebar({
     () => notes.filter((n) => !n.isDeleted && n.isArchived).length,
     [notes]
   );
-  const trashCount = useMemo(
-    () => notes.filter((n) => n.isDeleted).length,
-    [notes]
-  );
+  const trashCount = useMemo(() => notes.filter((n) => n.isDeleted).length, [notes]);
 
-  // Filter notes
+  // Filter notes based on search, current category, and selected tag
   const filteredNotes = useMemo(() => {
     return notes
       .filter((note) => {
@@ -105,9 +117,16 @@ export default function Sidebar({
           if (note.isDeleted || note.isArchived) return false;
         }
 
-        // Tag filter
-        if (selectedTag && (!note.tags || !note.tags.includes(selectedTag))) {
-          return false;
+        // Tag filter (normalized)
+        if (selectedTag) {
+          const cleanSelected = selectedTag.replace(/^#/, '').trim().toLowerCase();
+          if (
+            !note.tags ||
+            !Array.isArray(note.tags) ||
+            !note.tags.some((t) => t.replace(/^#/, '').trim().toLowerCase() === cleanSelected)
+          ) {
+            return false;
+          }
         }
 
         // Search query

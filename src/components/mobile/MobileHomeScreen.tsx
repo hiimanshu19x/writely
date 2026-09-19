@@ -30,6 +30,8 @@ interface MobileHomeScreenProps {
   onToggleArchive: (id: string) => void;
   onDeleteNote: (id: string) => void;
   onDeleteTag?: (tag: string) => void;
+  selectedTag?: string | null;
+  onSelectTag?: (tag: string | null) => void;
   currentFilter: NoteFilter;
   onChangeFilter: (filter: NoteFilter) => void;
   currentTheme: ThemeId;
@@ -63,73 +65,50 @@ const TAG_COLOR_PALETTES: Record<string, TagColorConfig> = {
   },
   work: {
     bg: '#E1F0FF',
-    text: '#1E56A0',
+    text: '#1E40AF',
     stripe: '#2563EB',
-    border: '#C5E2FF',
-    darkBg: '#152942',
+    border: '#BFDBFE',
+    darkBg: '#1E293B',
     darkText: '#93C5FD',
     darkStripe: '#60A5FA',
   },
   ideas: {
-    bg: '#E3F6EC',
-    text: '#226E46',
-    stripe: '#059669',
-    border: '#C5F0DA',
-    darkBg: '#163826',
-    darkText: '#86EFAC',
-    darkStripe: '#34D399',
-  },
-  travel: {
-    bg: '#EFE8FC',
-    text: '#5E3FA2',
-    stripe: '#7C3AED',
-    border: '#DDD1F8',
-    darkBg: '#281E42',
-    darkText: '#C4B5FD',
-    darkStripe: '#A78BFA',
-  },
-  books: {
-    bg: '#F4EFE6',
-    text: '#6B5738',
-    stripe: '#D97706',
-    border: '#E8DDCB',
-    darkBg: '#352D21',
-    darkText: '#E9D5BD',
+    bg: '#FEF3C7',
+    text: '#92400E',
+    stripe: '#F59E0B',
+    border: '#FDE68A',
+    darkBg: '#332711',
+    darkText: '#FCD34D',
     darkStripe: '#FBBF24',
   },
-  welcome: {
-    bg: '#FCE8DE',
-    text: '#8B482B',
-    stripe: '#D96538',
-    border: '#F8D3C1',
-    darkBg: '#3B241C',
-    darkText: '#F5BEAA',
-    darkStripe: '#E07D54',
+  travel: {
+    bg: '#D1FAE5',
+    text: '#065F46',
+    stripe: '#10B981',
+    border: '#A7F3D0',
+    darkBg: '#132C24',
+    darkText: '#6EE7B7',
+    darkStripe: '#34D399',
   },
-  guide: {
-    bg: '#E1F0FF',
-    text: '#1E56A0',
-    stripe: '#2563EB',
-    border: '#C5E2FF',
-    darkBg: '#152942',
-    darkText: '#93C5FD',
-    darkStripe: '#60A5FA',
+  books: {
+    bg: '#F3E8FF',
+    text: '#6B21A8',
+    stripe: '#9333EA',
+    border: '#E9D5FF',
+    darkBg: '#281A3C',
+    darkText: '#D8B4FE',
+    darkStripe: '#C084FC',
   },
 };
 
 // Dynamic color generator for any arbitrary tag
 const FALLBACK_PALETTES: TagColorConfig[] = [
-  { bg: '#FCE8DE', text: '#8B482B', stripe: '#D96538', border: '#F8D3C1', darkBg: '#3B241C', darkText: '#F5BEAA', darkStripe: '#E07D54' },
-  { bg: '#E1F0FF', text: '#1E56A0', stripe: '#2563EB', border: '#C5E2FF', darkBg: '#152942', darkText: '#93C5FD', darkStripe: '#60A5FA' },
-  { bg: '#E3F6EC', text: '#226E46', stripe: '#059669', border: '#C5F0DA', darkBg: '#163826', darkText: '#86EFAC', darkStripe: '#34D399' },
   { bg: '#EFE8FC', text: '#5E3FA2', stripe: '#7C3AED', border: '#DDD1F8', darkBg: '#281E42', darkText: '#C4B5FD', darkStripe: '#A78BFA' },
   { bg: '#F4EFE6', text: '#6B5738', stripe: '#D97706', border: '#E8DDCB', darkBg: '#352D21', darkText: '#E9D5BD', darkStripe: '#FBBF24' },
   { bg: '#FCE7F3', text: '#9D174D', stripe: '#DB2777', border: '#FBCFE8', darkBg: '#3C1828', darkText: '#F472B6', darkStripe: '#F472B6' },
   { bg: '#E0F2FE', text: '#075985', stripe: '#0284C7', border: '#BAE6FD', darkBg: '#112C3E', darkText: '#38BDF8', darkStripe: '#38BDF8' },
   { bg: '#CCFBF1', text: '#115E59', stripe: '#0D9488', border: '#99F6E4', darkBg: '#133532', darkText: '#2DD4BF', darkStripe: '#2DD4BF' },
 ];
-
-const DEFAULT_TAGS = ['personal', 'work', 'ideas', 'travel', 'books'];
 
 const THEMES_CYCLE: ThemeId[] = [
   'paper',
@@ -151,15 +130,27 @@ export default function MobileHomeScreen({
   onToggleArchive,
   onDeleteNote,
   onDeleteTag,
+  selectedTag: propSelectedTag,
+  onSelectTag,
   currentFilter,
   onChangeFilter,
   currentTheme,
   onChangeTheme,
   onOpenSettings,
   onOpenCommandPalette,
+  onOpenStats,
+  onOpenEditor,
 }: MobileHomeScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [internalSelectedTag, setInternalSelectedTag] = useState<string | null>(null);
+  const selectedTag = propSelectedTag !== undefined ? propSelectedTag : internalSelectedTag;
+  const setSelectedTag = (tag: string | null) => {
+    if (onSelectTag) {
+      onSelectTag(tag);
+    } else {
+      setInternalSelectedTag(tag);
+    }
+  };
   const [menuNoteId, setMenuNoteId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'updated' | 'created' | 'title'>('updated');
   const [showSortMenu, setShowSortMenu] = useState(false);
@@ -173,18 +164,18 @@ export default function MobileHomeScreen({
     onChangeTheme(THEMES_CYCLE[nextIndex]);
   };
 
-  // Extract all unique tags across notes plus default ones
+  // Extract all unique tags across existing non-deleted notes
   const availableTags = useMemo(() => {
-    const set = new Set<string>(DEFAULT_TAGS);
+    const set = new Set<string>();
     notes.forEach((n) => {
-      if (!n.isDeleted && n.tags) {
+      if (!n.isDeleted && n.tags && Array.isArray(n.tags)) {
         n.tags.forEach((t) => {
           const clean = t.replace(/^#/, '').trim().toLowerCase();
           if (clean) set.add(clean);
         });
       }
     });
-    return Array.from(set);
+    return Array.from(set).sort();
   }, [notes]);
 
   // Filtered tags for the colorful popup modal
@@ -681,12 +672,17 @@ export default function MobileHomeScreen({
           ) : (
             <div className="space-y-3">
               {filteredNotes.map((note) => {
-                // Determine primary tag
-                const rawTag = note.tags && note.tags.length > 0 ? note.tags[0] : 'personal';
-                const cleanTag = rawTag.replace(/^#/, '').trim().toLowerCase();
-                const tagStyle = getTagStyle(cleanTag);
+                // Determine primary tag only if note actually has tags
+                const hasTags = note.tags && Array.isArray(note.tags) && note.tags.length > 0;
+                const rawTag = hasTags ? note.tags[0] : null;
+                const cleanTag = rawTag ? rawTag.replace(/^#/, '').trim().toLowerCase() : null;
+                const tagStyle = cleanTag ? getTagStyle(cleanTag) : null;
                 const isMenuOpen = menuNoteId === note.id;
-                const stripeColor = isDarkTheme ? tagStyle.darkStripe : tagStyle.stripe;
+                const stripeColor = tagStyle
+                  ? isDarkTheme
+                    ? tagStyle.darkStripe
+                    : tagStyle.stripe
+                  : 'transparent';
 
                 return (
                   <div
@@ -696,11 +692,15 @@ export default function MobileHomeScreen({
                       isMenuOpen ? 'z-30 ring-2 ring-[var(--accent-main)]/20' : 'z-0'
                     }`}
                   >
-                    {/* Prominent Colored Accent Indicator Bar */}
-                    <div
-                      style={{ backgroundColor: stripeColor }}
-                      className="w-1.5 rounded-full self-stretch shrink-0"
-                    />
+                    {/* Left Colored Accent Indicator Bar */}
+                    {tagStyle ? (
+                      <div
+                        style={{ backgroundColor: stripeColor }}
+                        className="w-1.5 rounded-full self-stretch shrink-0"
+                      />
+                    ) : (
+                      <div className="w-1.5 rounded-full self-stretch shrink-0 bg-[var(--border-subtle)]/40" />
+                    )}
 
                     {/* Card Content */}
                     <div className="flex-1 min-w-0">
@@ -784,15 +784,17 @@ export default function MobileHomeScreen({
 
                       {/* Footer Row: Tag Chip + Date + Status Badges */}
                       <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
-                        <span
-                          style={{
-                            backgroundColor: isDarkTheme ? tagStyle.darkBg : tagStyle.bg,
-                            color: isDarkTheme ? tagStyle.darkText : tagStyle.text,
-                          }}
-                          className="px-2.5 py-0.5 rounded-full font-bold tracking-tight text-[10px]"
-                        >
-                          #{cleanTag}
-                        </span>
+                        {cleanTag && tagStyle && (
+                          <span
+                            style={{
+                              backgroundColor: isDarkTheme ? tagStyle.darkBg : tagStyle.bg,
+                              color: isDarkTheme ? tagStyle.darkText : tagStyle.text,
+                            }}
+                            className="px-2.5 py-0.5 rounded-full font-bold tracking-tight text-[10px]"
+                          >
+                            #{cleanTag}
+                          </span>
+                        )}
 
                         {note.isArchived && (
                           <span className="px-2 py-0.5 rounded-full bg-[var(--accent-subtle)] text-[var(--accent-main)] font-semibold text-[10px] flex items-center gap-1">
@@ -801,7 +803,7 @@ export default function MobileHomeScreen({
                           </span>
                         )}
 
-                        <span>&bull;</span>
+                        {cleanTag && tagStyle && <span>&bull;</span>}
 
                         <span>{formatNoteDate(note.updatedAt)}</span>
                       </div>
@@ -912,24 +914,18 @@ export default function MobileHomeScreen({
                   const stripeColor = isDarkTheme ? style.darkStripe : style.stripe;
 
                   return (
-                    <button
+                    <div
                       key={tag}
-                      onClick={() => {
-                        setSelectedTag(isSelected ? null : tag);
-                        onChangeFilter('all');
-                        setIsTagsModalOpen(false);
-                      }}
                       style={{
                         backgroundColor: isDarkTheme ? style.darkBg : style.bg,
-                        color: isDarkTheme ? style.darkText : style.text,
                         border: isSelected
                           ? `2px solid ${stripeColor}`
                           : isDarkTheme
                           ? '1.5px solid transparent'
                           : `1.5px solid ${style.border}`,
                       }}
-                      className={`h-10 px-4 rounded-full flex items-center gap-2 text-xs font-semibold tracking-wide transition-all duration-200 active:scale-95 shadow-xs hover:shadow-sm shrink-0 ${
-                        isSelected ? 'shadow-md scale-[1.03]' : 'opacity-95 hover:opacity-100'
+                      className={`h-10 pl-3.5 pr-2 rounded-full flex items-center gap-1.5 text-xs font-semibold tracking-wide transition-all duration-200 shadow-xs shrink-0 ${
+                        isSelected ? 'shadow-md ring-2 ring-[var(--accent-main)]/30' : 'opacity-95 hover:opacity-100'
                       }`}
                     >
                       {/* Left Vibrant Accent Dot */}
@@ -938,32 +934,56 @@ export default function MobileHomeScreen({
                         className="w-2 h-2 rounded-full shrink-0"
                       />
 
-                      {/* Tag Name */}
-                      <span>#{tag}</span>
-
-                      {/* Note Count Badge Pill */}
-                      <span
-                        style={{
-                          backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
-                          color: isDarkTheme ? style.darkText : style.text,
+                      {/* Tag Name & Count Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedTag(isSelected ? null : tag);
                         }}
-                        className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                        style={{ color: isDarkTheme ? style.darkText : style.text }}
+                        className="flex items-center gap-1.5 font-semibold text-xs active:scale-95 transition-transform py-1.5 cursor-pointer"
                       >
-                        {count}
-                      </span>
+                        <span>#{tag}</span>
 
-                      {/* Selected Checkmark */}
-                      {isSelected && (
-                        <span className="text-[11px] font-bold ml-0.5">✓</span>
+                        <span
+                          style={{
+                            backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
+                            color: isDarkTheme ? style.darkText : style.text,
+                          }}
+                          className="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                        >
+                          {count}
+                        </span>
+
+                        {isSelected && (
+                          <span className="text-[11px] font-bold ml-0.5">✓</span>
+                        )}
+                      </button>
+
+                      {/* Direct Delete Trash Button on Pill */}
+                      {onDeleteTag && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteTag(tag);
+                          }}
+                          title={`Delete tag #${tag} from all notes`}
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--danger-main)] hover:bg-[var(--danger-subtle)] active:scale-90 transition-all cursor-pointer ml-0.5"
+                        >
+                          <Trash2 className="w-3 h-3 stroke-[2.2]" />
+                        </button>
                       )}
-                    </button>
+                    </div>
                   );
                 })}
               </div>
 
               {modalFilteredTags.length === 0 && (
                 <div className="py-12 text-center text-xs text-[var(--text-muted)] italic">
-                  No tags match "{tagSearchQuery}".
+                  {availableTags.length === 0
+                    ? 'No tags created yet. Add tags in note options to organize your thoughts.'
+                    : `No tags match "${tagSearchQuery}".`}
                 </div>
               )}
             </div>
@@ -976,30 +996,43 @@ export default function MobileHomeScreen({
                     <button
                       onClick={() => {
                         onDeleteTag(selectedTag);
-                        setIsTagsModalOpen(false);
                       }}
-                      className="px-3 py-1.5 rounded-xl border border-[var(--danger-main)]/30 text-[var(--danger-main)] bg-[var(--danger-subtle)] hover:bg-[var(--danger-subtle)]/80 text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all"
+                      className="px-3 py-1.5 rounded-xl border border-[var(--danger-main)]/30 text-[var(--danger-main)] bg-[var(--danger-subtle)] hover:bg-[var(--danger-subtle)]/80 text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all shadow-2xs"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Delete Tag</span>
                     </button>
                   )}
-                  <span className="text-xs text-[var(--text-muted)] truncate max-w-[120px]">
+                  <span className="text-xs font-medium text-[var(--text-muted)] truncate max-w-[120px]">
                     #{selectedTag.replace(/^#/, '')}
                   </span>
                 </div>
               ) : (
                 <span className="text-xs text-[var(--text-muted)]">
-                  Tap any tag to view or filter
+                  {availableTags.length === 0 ? 'No tags yet' : 'Tap tag to filter, or trash to delete'}
                 </span>
               )}
 
-              <button
-                onClick={() => setIsTagsModalOpen(false)}
-                className="px-5 py-2 rounded-xl bg-[var(--accent-main)] text-[var(--accent-contrast)] text-xs font-bold shadow-xs hover:opacity-95 transition-opacity active:scale-95 ml-auto"
-              >
-                Done
-              </button>
+              <div className="flex items-center gap-2 ml-auto">
+                {selectedTag && (
+                  <button
+                    onClick={() => {
+                      onChangeFilter('all');
+                      setIsTagsModalOpen(false);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-[var(--accent-main)] text-[var(--accent-contrast)] text-xs font-bold shadow-xs hover:opacity-95 transition-opacity active:scale-95"
+                  >
+                    View Notes
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setIsTagsModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-semibold hover:bg-[var(--bg-card-hover)] transition-colors active:scale-95"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         </div>

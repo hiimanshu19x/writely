@@ -48,7 +48,10 @@ export default function NoteInfoModal({
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    const updated = (note.tags || []).filter((t) => t !== tagToRemove);
+    const cleanRemove = tagToRemove.replace(/^#/, '').trim().toLowerCase();
+    const updated = (note.tags || []).filter(
+      (t) => t.replace(/^#/, '').trim().toLowerCase() !== cleanRemove
+    );
     onUpdateTags?.(updated);
   };
 

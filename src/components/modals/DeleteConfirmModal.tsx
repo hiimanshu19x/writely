@@ -7,7 +7,7 @@ interface DeleteConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  mode: 'trash' | 'permanent' | 'emptyTrash';
+  mode: 'trash' | 'permanent' | 'emptyTrash' | 'deleteTag';
   noteTitle?: string;
   count?: number;
 }
@@ -34,6 +34,11 @@ export default function DeleteConfirmModal({
     title = 'Empty Trash?';
     description = `Are you sure you want to permanently delete all ${count ?? ''} notes in Trash? This cannot be undone.`;
     confirmButtonText = 'Empty Trash';
+  } else if (mode === 'deleteTag') {
+    const tagName = (noteTitle || '').replace(/^#/, '');
+    title = `Delete Tag "#${tagName}"?`;
+    description = `Are you sure you want to delete the tag "#${tagName}"? It will be removed from all notes that have it. Your notes will remain safe.`;
+    confirmButtonText = 'Delete Tag';
   }
 
   return (

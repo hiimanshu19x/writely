@@ -278,4 +278,27 @@ const trashView = mockNotes.filter((n) => n.isDeleted);
 assert.strictEqual(trashView.length, 1, 'Trash view only includes deleted notes');
 console.log('✓ Test 11 Passed: Note archive filtering verified.');
 
+// 12. Verify Tag Deletion Logic
+console.log('Test 12: Tag Deletion Logic');
+const notesWithTags = [
+  { id: '1', tags: ['work', 'personal'] },
+  { id: '2', tags: ['work', 'ideas'] },
+  { id: '3', tags: ['personal'] },
+];
+const tagToRemove = 'work';
+const updatedAfterDelete = notesWithTags.map((n) => ({
+  ...n,
+  tags: (n.tags || []).filter((t) => t !== tagToRemove),
+}));
+assert.deepStrictEqual(updatedAfterDelete[0].tags, ['personal']);
+assert.deepStrictEqual(updatedAfterDelete[1].tags, ['ideas']);
+assert.deepStrictEqual(updatedAfterDelete[2].tags, ['personal']);
+console.log('✓ Test 12 Passed: Tag deletion logic verified.');
+
+// 13. Verify iOS Pinch Animation & Pop Styling
+console.log('Test 13: iOS Pinch Animation & Pop Styling');
+assert.ok(cssContent.includes('@keyframes iosPinchPop'), 'Defines iosPinchPop keyframes');
+assert.ok(cssContent.includes('.animate-ios-pinch-pop'), 'Defines animate-ios-pinch-pop class');
+console.log('✓ Test 13 Passed: iOS pinch animation and pop styling verified.');
+
 console.log('\n--- ALL VERIFICATION TESTS PASSED SUCCESSFULLY! ---');

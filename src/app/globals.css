@@ -650,3 +650,25 @@ html {
   scrollbar-width: none !important; /* Firefox */
 }
 
+/* iOS Spring Pinch / Pop Animation for Menu Cards */
+@keyframes iosPinchPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.025);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-ios-pinch-pop {
+  transform-origin: top right;
+  animation: iosPinchPop 185ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+

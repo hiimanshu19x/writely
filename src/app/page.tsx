@@ -58,10 +58,11 @@ export default function WritelyApp() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [deleteModalConfig, setDeleteModalConfig] = useState<{
     isOpen: boolean;
-    mode: 'trash' | 'permanent' | 'emptyTrash';
+    mode: 'trash' | 'permanent' | 'emptyTrash' | 'deleteTag';
     noteId?: string;
     noteTitle?: string;
     count?: number;
+    tagToDelete?: string;
   }>({
     isOpen: false,
     mode: 'trash',
@@ -286,6 +287,43 @@ export default function WritelyApp() {
     setActiveNoteId(nextActive ? nextActive.id : null);
   }, [notes, reloadNotes]);
 
+  // Delete a tag from all notes
+  const handleDeleteTag = useCallback(
+    async (tagToDelete: string) => {
+      const cleanTarget = tagToDelete.replace(/^#/, '').trim().toLowerCase();
+      const affectedNotes = notes.filter(
+        (n) =>
+          n.tags &&
+          n.tags.some((t) => t.replace(/^#/, '').trim().toLowerCase() === cleanTarget)
+      );
+
+      await Promise.all(
+        affectedNotes.map((note) => {
+          const newTags = (note.tags || []).filter(
+            (t) => t.replace(/^#/, '').trim().toLowerCase() !== cleanTarget
+          );
+          return db.notes.update(note.id, {
+            tags: newTags,
+            updatedAt: Date.now(),
+          });
+        })
+      );
+
+      await reloadNotes();
+    },
+    [notes, reloadNotes]
+  );
+
+  // Request tag deletion confirmation modal
+  const handleRequestDeleteTag = useCallback((tag: string) => {
+    setDeleteModalConfig({
+      isOpen: true,
+      mode: 'deleteTag',
+      noteTitle: tag,
+      tagToDelete: tag,
+    });
+  }, []);
+
   // Toggle sidebar
   const handleToggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => {
@@ -354,6 +392,7 @@ export default function WritelyApp() {
 
   // Active trash count
   const trashCount = notes.filter((n) => n.isDeleted).length;
+  const isDarkTheme = ['dark', 'oled', 'midnight', 'nordic'].includes(theme);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-app)] text-[var(--text-main)]">
@@ -371,6 +410,7 @@ export default function WritelyApp() {
             onToggleFavorite={handleToggleFavorite}
             onToggleArchive={handleToggleArchive}
             onDeleteNote={handleMoveToTrash}
+            onDeleteTag={handleRequestDeleteTag}
             currentFilter={currentFilter}
             onChangeFilter={setCurrentFilter}
             currentTheme={theme}
@@ -397,6 +437,7 @@ export default function WritelyApp() {
             onCreateNote={handleCreateNote}
             onToggleFavorite={handleToggleFavorite}
             onToggleArchive={handleToggleArchive}
+            onDeleteTag={handleRequestDeleteTag}
             currentFilter={currentFilter}
             onChangeFilter={setCurrentFilter}
             currentTheme={theme}
@@ -413,18 +454,29 @@ export default function WritelyApp() {
         <main className="flex-1 flex flex-col h-full overflow-hidden relative">
           {activeNote ? (
             <>
-              {/* If note is in Trash, show prominent restore banner */}
+              {/* If note is in Trash, show prominent high-contrast restore banner */}
               {activeNote.isDeleted && (
-                <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 text-xs flex items-center justify-between text-amber-800 dark:text-amber-200">
-                  <span>This note is currently in Trash.</span>
+                <div
+                  className={`px-4 py-2.5 border-b text-xs flex items-center justify-between font-medium transition-colors ${
+                    isDarkTheme
+                      ? 'bg-amber-950/40 border-amber-500/30 text-amber-200'
+                      : 'bg-amber-100/90 border-amber-300/80 text-amber-950'
+                  }`}
+                >
                   <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 animate-pulse" />
+                    <span className="font-semibold">This note is currently in Trash.</span>
+                  </div>
+                  <div className="flex items-center gap-3">
                     <button
                       onClick={() => handleRestoreNote(activeNote.id)}
-                      className="font-medium underline hover:opacity-80"
+                      className={`font-bold underline hover:opacity-80 transition-opacity ${
+                        isDarkTheme ? 'text-amber-300' : 'text-amber-900'
+                      }`}
                     >
                       Restore note
                     </button>
-                    <span>&bull;</span>
+                    <span className="opacity-40">&bull;</span>
                     <button
                       onClick={() =>
                         setDeleteModalConfig({
@@ -434,7 +486,7 @@ export default function WritelyApp() {
                           noteTitle: activeNote.title,
                         })
                       }
-                      className="font-medium text-[var(--danger-main)] hover:underline"
+                      className="font-bold text-[var(--danger-main)] hover:underline transition-all"
                     >
                       Delete forever
                     </button>
@@ -442,13 +494,24 @@ export default function WritelyApp() {
                 </div>
               )}
 
-              {/* If note is in Archive, show unarchive banner */}
+              {/* If note is in Archive, show high-contrast unarchive banner */}
               {!activeNote.isDeleted && activeNote.isArchived && (
-                <div className="px-4 py-2 bg-blue-500/10 border-b border-blue-500/20 text-xs flex items-center justify-between text-blue-800 dark:text-blue-200">
-                  <span>This note is currently in Archive.</span>
+                <div
+                  className={`px-4 py-2.5 border-b text-xs flex items-center justify-between font-medium transition-colors ${
+                    isDarkTheme
+                      ? 'bg-sky-950/40 border-sky-500/30 text-sky-200'
+                      : 'bg-sky-100/90 border-sky-300/80 text-sky-950'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" />
+                    <span className="font-semibold">This note is archived.</span>
+                  </div>
                   <button
                     onClick={() => handleToggleArchive(activeNote.id)}
-                    className="font-medium underline hover:opacity-80"
+                    className={`font-bold underline hover:opacity-80 transition-opacity ${
+                      isDarkTheme ? 'text-sky-300' : 'text-sky-900'
+                    }`}
                   >
                     Unarchive note
                   </button>
@@ -581,6 +644,8 @@ export default function WritelyApp() {
             handlePermanentlyDelete(deleteModalConfig.noteId);
           } else if (deleteModalConfig.mode === 'emptyTrash') {
             handleEmptyTrash();
+          } else if (deleteModalConfig.mode === 'deleteTag' && deleteModalConfig.tagToDelete) {
+            handleDeleteTag(deleteModalConfig.tagToDelete);
           }
         }}
       />

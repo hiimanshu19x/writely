@@ -29,6 +29,7 @@ interface MobileHomeScreenProps {
   onToggleFavorite: (id: string) => void;
   onToggleArchive: (id: string) => void;
   onDeleteNote: (id: string) => void;
+  onDeleteTag?: (tag: string) => void;
   currentFilter: NoteFilter;
   onChangeFilter: (filter: NoteFilter) => void;
   currentTheme: ThemeId;
@@ -149,6 +150,7 @@ export default function MobileHomeScreen({
   onToggleFavorite,
   onToggleArchive,
   onDeleteNote,
+  onDeleteTag,
   currentFilter,
   onChangeFilter,
   currentTheme,
@@ -615,6 +617,54 @@ export default function MobileHomeScreen({
             </div>
           </div>
 
+          {/* Active Filtered Tag Bar with Delete Tag Option */}
+          {selectedTag && (
+            <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] shadow-xs animate-in fade-in">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span
+                  style={{
+                    backgroundColor: isDarkTheme
+                      ? getTagStyle(selectedTag).darkStripe
+                      : getTagStyle(selectedTag).stripe,
+                  }}
+                  className="w-3 h-3 rounded-full shrink-0 ring-2 ring-white/20 dark:ring-black/20"
+                />
+                <div className="truncate">
+                  <span className="text-xs font-bold text-[var(--text-main)]">
+                    #{selectedTag.replace(/^#/, '')}
+                  </span>
+                  <span className="text-[11px] text-[var(--text-muted)] ml-1.5 font-medium">
+                    ({filteredNotes.length} {filteredNotes.length === 1 ? 'note' : 'notes'})
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {onDeleteTag && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteTag(selectedTag);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-[var(--danger-subtle)] text-[var(--danger-main)] hover:opacity-90 text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all shadow-2xs"
+                    title={`Delete tag #${selectedTag} from all notes`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Tag</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setSelectedTag(null)}
+                  className="p-1.5 rounded-xl hover:bg-[var(--bg-card-hover)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors active:scale-95"
+                  title="Clear filter"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* NOTES LIST CARDS - PROMINENTLY COLORED ACCORDING TO TAGS */}
           {filteredNotes.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[var(--border-subtle)] p-8 text-center bg-[var(--bg-card)]/50">
@@ -642,7 +692,9 @@ export default function MobileHomeScreen({
                   <div
                     key={note.id}
                     onClick={() => onSelectNote(note.id)}
-                    className="relative group rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] p-4 shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.99] cursor-pointer flex gap-3.5"
+                    className={`relative group rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] p-4 shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.99] cursor-pointer flex gap-3.5 ${
+                      isMenuOpen ? 'z-30 ring-2 ring-[var(--accent-main)]/20' : 'z-0'
+                    }`}
                   >
                     {/* Prominent Colored Accent Indicator Bar */}
                     <div
@@ -662,48 +714,62 @@ export default function MobileHomeScreen({
                         <div className="relative" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => setMenuNoteId(isMenuOpen ? null : note.id)}
-                            className="p-1 -mr-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] transition-colors"
+                            className="p-1 -mr-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] transition-colors active:scale-90"
                             title="More options"
                           >
                             <MoreHorizontal className="w-4 h-4" />
                           </button>
 
-                          {/* Options Popup */}
+                          {/* Options Popup with iOS Spring Pinch Animation & Outside Backdrop */}
                           {isMenuOpen && (
-                            <div className="absolute right-0 top-6 z-30 w-40 rounded-xl bg-[var(--bg-dialog)] border border-[var(--border-subtle)] shadow-xl py-1 text-xs text-[var(--text-main)] animate-in fade-in zoom-in-95 duration-100">
-                              <button
-                                onClick={() => {
-                                  onToggleFavorite(note.id);
+                            <>
+                              <div
+                                className="fixed inset-0 z-40 bg-transparent cursor-default"
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setMenuNoteId(null);
                                 }}
-                                className="w-full text-left px-3 py-2 hover:bg-[var(--bg-card-hover)] flex items-center gap-2"
+                              />
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                className="absolute right-0 top-7.5 z-50 w-44 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] shadow-2xl py-1.5 text-xs text-[var(--text-main)] animate-ios-pinch-pop ring-1 ring-black/10 dark:ring-white/10"
                               >
-                                <Star className={`w-3.5 h-3.5 ${note.favorite ? 'fill-amber-400 text-amber-400' : ''}`} />
-                                <span>{note.favorite ? 'Remove Favorite' : 'Mark as Favorite'}</span>
-                              </button>
+                                <button
+                                  onClick={() => {
+                                    onToggleFavorite(note.id);
+                                    setMenuNoteId(null);
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 hover:bg-[var(--bg-card-hover)] flex items-center gap-2.5 transition-colors"
+                                >
+                                  <Star className={`w-3.5 h-3.5 ${note.favorite ? 'fill-amber-400 text-amber-400' : ''}`} />
+                                  <span>{note.favorite ? 'Remove Favorite' : 'Mark as Favorite'}</span>
+                                </button>
 
-                              <button
-                                onClick={() => {
-                                  onToggleArchive(note.id);
-                                  setMenuNoteId(null);
-                                }}
-                                className="w-full text-left px-3 py-2 hover:bg-[var(--bg-card-hover)] flex items-center gap-2"
-                              >
-                                <Archive className="w-3.5 h-3.5" />
-                                <span>{note.isArchived ? 'Unarchive Note' : 'Archive Note'}</span>
-                              </button>
+                                <button
+                                  onClick={() => {
+                                    onToggleArchive(note.id);
+                                    setMenuNoteId(null);
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 hover:bg-[var(--bg-card-hover)] flex items-center gap-2.5 transition-colors"
+                                >
+                                  <Archive className="w-3.5 h-3.5" />
+                                  <span>{note.isArchived ? 'Unarchive Note' : 'Archive Note'}</span>
+                                </button>
 
-                              <button
-                                onClick={() => {
-                                  onDeleteNote(note.id);
-                                  setMenuNoteId(null);
-                                }}
-                                className="w-full text-left px-3 py-2 hover:bg-[var(--bg-card-hover)] flex items-center gap-2 text-[var(--danger-main)]"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>{note.isDeleted ? 'Delete Forever' : 'Move to Trash'}</span>
-                              </button>
-                            </div>
+                                <div className="my-1 border-t border-[var(--border-subtle)]/60" />
+
+                                <button
+                                  onClick={() => {
+                                    onDeleteNote(note.id);
+                                    setMenuNoteId(null);
+                                  }}
+                                  className="w-full text-left px-3.5 py-2 hover:bg-[var(--danger-subtle)] flex items-center gap-2.5 text-[var(--danger-main)] transition-colors"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>{note.isDeleted ? 'Delete Forever' : 'Move to Trash'}</span>
+                                </button>
+                              </div>
+                            </>
                           )}
                         </div>
                       </div>
@@ -904,13 +970,33 @@ export default function MobileHomeScreen({
 
             {/* Modal Bottom Bar */}
             <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--bg-app)]/40 flex items-center justify-between gap-3 shrink-0">
-              <span className="text-xs text-[var(--text-muted)]">
-                {selectedTag ? `Filtered by #${selectedTag}` : 'Tap any tag to filter'}
-              </span>
+              {selectedTag ? (
+                <div className="flex items-center gap-2">
+                  {onDeleteTag && (
+                    <button
+                      onClick={() => {
+                        onDeleteTag(selectedTag);
+                        setIsTagsModalOpen(false);
+                      }}
+                      className="px-3 py-1.5 rounded-xl border border-[var(--danger-main)]/30 text-[var(--danger-main)] bg-[var(--danger-subtle)] hover:bg-[var(--danger-subtle)]/80 text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete Tag</span>
+                    </button>
+                  )}
+                  <span className="text-xs text-[var(--text-muted)] truncate max-w-[120px]">
+                    #{selectedTag.replace(/^#/, '')}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-xs text-[var(--text-muted)]">
+                  Tap any tag to view or filter
+                </span>
+              )}
 
               <button
                 onClick={() => setIsTagsModalOpen(false)}
-                className="px-5 py-2 rounded-xl bg-[var(--accent-main)] text-[var(--accent-contrast)] text-xs font-bold shadow-xs hover:opacity-95 transition-opacity active:scale-95"
+                className="px-5 py-2 rounded-xl bg-[var(--accent-main)] text-[var(--accent-contrast)] text-xs font-bold shadow-xs hover:opacity-95 transition-opacity active:scale-95 ml-auto"
               >
                 Done
               </button>

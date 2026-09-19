@@ -30,6 +30,7 @@ interface SidebarProps {
   onCreateNote: () => void;
   onToggleFavorite: (id: string) => void;
   onToggleArchive?: (id: string) => void;
+  onDeleteTag?: (tag: string) => void;
   currentFilter: NoteFilter;
   onChangeFilter: (filter: NoteFilter) => void;
   currentTheme: ThemeId;
@@ -46,6 +47,7 @@ export default function Sidebar({
   onCreateNote,
   onToggleFavorite,
   onToggleArchive,
+  onDeleteTag,
   currentFilter,
   onChangeFilter,
   currentTheme,
@@ -329,17 +331,30 @@ export default function Sidebar({
           </span>
           <div className="flex flex-wrap gap-1 px-1">
             {availableTags.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                className={`text-[11px] px-2 py-0.5 rounded-md transition-colors ${
-                  selectedTag === tag
-                    ? 'bg-[var(--accent-main)] text-[var(--accent-contrast)] font-medium'
-                    : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-subtle)]'
-                }`}
-              >
-                #{tag}
-              </button>
+              <div key={tag} className="inline-flex items-center">
+                <button
+                  onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                  className={`text-[11px] px-2 py-0.5 rounded-md transition-colors ${
+                    selectedTag === tag
+                      ? 'bg-[var(--accent-main)] text-[var(--accent-contrast)] font-medium rounded-r-none'
+                      : 'bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-subtle)]'
+                  }`}
+                >
+                  #{tag}
+                </button>
+                {selectedTag === tag && onDeleteTag && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteTag(tag);
+                    }}
+                    title={`Delete tag #${tag} from all notes`}
+                    className="bg-[var(--accent-main)] text-[var(--accent-contrast)] hover:bg-[var(--danger-main)] px-1 py-0.5 rounded-r-md transition-colors text-[10px]"
+                  >
+                    <Trash2 className="w-2.5 h-2.5" />
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         </div>

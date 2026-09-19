@@ -354,18 +354,40 @@
   --app-font: var(--font-ibm-plex-mono), "Courier New", Courier, monospace;
 }
 
-/* Font Size mappings */
-[data-font-size="sm"] .tiptap-container {
-  font-size: 15px;
-  line-height: 1.65;
+/* Reading Size System (sm = Compact, base = Default, lg = Comfortable) */
+:root,
+[data-font-size="base"] {
+  --reading-font-size: 17px;
+  --reading-line-height: 1.75;
+  --reading-title-size: clamp(1.85rem, 4vw, 2.35rem);
+  --reading-excerpt-size: 13px;
 }
-[data-font-size="base"] .tiptap-container {
-  font-size: 17px;
-  line-height: 1.75;
+
+[data-font-size="sm"] {
+  --reading-font-size: 14.5px;
+  --reading-line-height: 1.6;
+  --reading-title-size: clamp(1.5rem, 3.5vw, 1.95rem);
+  --reading-excerpt-size: 11.5px;
 }
-[data-font-size="lg"] .tiptap-container {
-  font-size: 19px;
-  line-height: 1.85;
+
+[data-font-size="lg"] {
+  --reading-font-size: 21px;
+  --reading-line-height: 1.85;
+  --reading-title-size: clamp(2.25rem, 5vw, 2.85rem);
+  --reading-excerpt-size: 15px;
+}
+
+@media (min-width: 768px) {
+  :root,
+  [data-font-size="base"] {
+    --reading-font-size: 18px;
+  }
+  [data-font-size="sm"] {
+    --reading-font-size: 15px;
+  }
+  [data-font-size="lg"] {
+    --reading-font-size: 22px;
+  }
 }
 
 body {
@@ -424,9 +446,16 @@ html {
 }
 
 /* Tiptap rich-text editor styling */
+.tiptap-container {
+  font-size: var(--reading-font-size);
+  line-height: var(--reading-line-height);
+}
+
 .tiptap-container .tiptap {
   outline: none !important;
   min-height: 480px;
+  font-size: var(--reading-font-size) !important;
+  line-height: var(--reading-line-height) !important;
 }
 
 .tiptap-container .tiptap > * + * {

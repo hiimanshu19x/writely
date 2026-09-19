@@ -83,10 +83,10 @@ export default function SettingsModal({
     { id: 'mono-ibmplex', name: 'IBM Plex Mono', category: 'Typewriter Mono', preview: 'Aesthetic tactile notes', fontStyle: 'var(--font-ibm-plex-mono), monospace' },
   ];
 
-  const fontSizes: { id: FontSizeId; label: string }[] = [
-    { id: 'sm', label: 'Compact' },
-    { id: 'base', label: 'Normal' },
-    { id: 'lg', label: 'Large' },
+  const fontSizes: { id: FontSizeId; label: string; size: string; preview: string }[] = [
+    { id: 'sm', label: 'Compact', size: '14px', preview: 'A' },
+    { id: 'base', label: 'Default', size: '17px', preview: 'A' },
+    { id: 'lg', label: 'Comfortable', size: '21px', preview: 'A' },
   ];
 
   // Handle backup JSON file import
@@ -337,22 +337,35 @@ export default function SettingsModal({
 
               {/* Font Size Selector */}
               <div>
-                <div className="flex items-center gap-2 mb-2 text-xs font-semibold text-[var(--text-muted)]">
-                  <Type className="w-4 h-4" />
-                  <span>Reading Size</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-[var(--text-muted)]">
+                    <Type className="w-4 h-4" />
+                    <span>Reading Size</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-[var(--text-muted)]">
+                    {currentFontSize === 'sm' ? '14px' : currentFontSize === 'lg' ? '21px' : '17px'}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {fontSizes.map((s) => (
                     <button
                       key={s.id}
                       onClick={() => onChangeFontSize(s.id)}
-                      className={`flex-1 py-2 px-3 rounded-xl border text-xs font-medium transition-all ${
+                      className={`py-2.5 px-3 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all ${
                         currentFontSize === s.id
-                          ? 'border-[var(--accent-main)] bg-[var(--accent-subtle)] text-[var(--accent-main)]'
+                          ? 'border-[var(--accent-main)] bg-[var(--accent-subtle)] text-[var(--accent-main)] shadow-xs ring-2 ring-[var(--accent-main)]/20'
                           : 'border-[var(--border-subtle)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-muted)]'
                       }`}
                     >
-                      {s.label}
+                      <span
+                        className="font-bold leading-none"
+                        style={{
+                          fontSize: s.id === 'sm' ? '13px' : s.id === 'lg' ? '20px' : '16px',
+                        }}
+                      >
+                        {s.preview}
+                      </span>
+                      <span className="text-[11px] font-medium">{s.label}</span>
                     </button>
                   ))}
                 </div>

@@ -102,6 +102,7 @@ export default function WritelyApp() {
       setTheme(savedTheme);
       setFont(savedFont);
       setFontSize(savedFontSize);
+      setStoredFontSize(savedFontSize);
       setSidebarOpen(savedSidebar);
 
       // Seed database if empty
@@ -195,6 +196,38 @@ export default function WritelyApp() {
       );
     },
     [notes]
+  );
+
+  // Toggle archive
+  const handleToggleArchive = useCallback(
+    async (id: string) => {
+      const note = notes.find((n) => n.id === id);
+      if (!note) return;
+      const nextArchived = !note.isArchived;
+      await db.notes.update(id, {
+        isArchived: nextArchived,
+        archivedAt: nextArchived ? Date.now() : null,
+      });
+      const updated = await reloadNotes();
+
+      // If active note was archived/unarchived, handle active selection gracefully
+      if (activeNoteId === id) {
+        if (nextArchived && (currentFilter === 'all' || currentFilter === 'favorites')) {
+          const nextActive = updated.find((n) => !n.isDeleted && !n.isArchived);
+          setActiveNoteId(nextActive ? nextActive.id : null);
+          if (isMobile) {
+            setMobileView('home');
+          }
+        } else if (!nextArchived && currentFilter === 'archive') {
+          const nextActive = updated.find((n) => !n.isDeleted && n.isArchived);
+          setActiveNoteId(nextActive ? nextActive.id : null);
+          if (isMobile) {
+            setMobileView('home');
+          }
+        }
+      }
+    },
+    [notes, activeNoteId, currentFilter, reloadNotes, isMobile]
   );
 
   // Move note to trash
@@ -336,6 +369,7 @@ export default function WritelyApp() {
             onSelectNote={handleSelectNote}
             onCreateNote={handleCreateNote}
             onToggleFavorite={handleToggleFavorite}
+            onToggleArchive={handleToggleArchive}
             onDeleteNote={handleMoveToTrash}
             currentFilter={currentFilter}
             onChangeFilter={setCurrentFilter}
@@ -362,6 +396,7 @@ export default function WritelyApp() {
             onSelectNote={handleSelectNote}
             onCreateNote={handleCreateNote}
             onToggleFavorite={handleToggleFavorite}
+            onToggleArchive={handleToggleArchive}
             currentFilter={currentFilter}
             onChangeFilter={setCurrentFilter}
             currentTheme={theme}
@@ -407,6 +442,19 @@ export default function WritelyApp() {
                 </div>
               )}
 
+              {/* If note is in Archive, show unarchive banner */}
+              {!activeNote.isDeleted && activeNote.isArchived && (
+                <div className="px-4 py-2 bg-blue-500/10 border-b border-blue-500/20 text-xs flex items-center justify-between text-blue-800 dark:text-blue-200">
+                  <span>This note is currently in Archive.</span>
+                  <button
+                    onClick={() => handleToggleArchive(activeNote.id)}
+                    className="font-medium underline hover:opacity-80"
+                  >
+                    Unarchive note
+                  </button>
+                </div>
+              )}
+
               {/* Editor Header */}
               <EditorHeader
                 note={activeNote}
@@ -414,6 +462,7 @@ export default function WritelyApp() {
                 sidebarOpen={sidebarOpen}
                 onToggleSidebar={handleToggleSidebar}
                 onToggleFavorite={() => handleToggleFavorite(activeNote.id)}
+                onToggleArchive={() => handleToggleArchive(activeNote.id)}
                 onOpenExport={() => setIsExportOpen(true)}
                 onOpenInfo={() => setIsInfoOpen(true)}
                 onDeleteNote={() => {
@@ -498,6 +547,8 @@ export default function WritelyApp() {
           }
         }}
         onViewTrash={() => setCurrentFilter('trash')}
+        onViewArchive={() => setCurrentFilter('archive')}
+        onToggleArchiveNote={() => activeNote && handleToggleArchive(activeNote.id)}
         onToggleFormatting={() => setIsFormattingOpen((prev) => !prev)}
       />
 

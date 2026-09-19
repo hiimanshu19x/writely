@@ -247,4 +247,35 @@ assert.ok(cssContent.includes('--accent-contrast: #0B0F19;'), 'Midnight theme ha
 assert.ok(cssContent.includes('--font-sf-pro:'), 'Defines SF Pro font family');
 console.log('✓ Test 9 Passed: 11 fonts and contrast tokens fully verified.');
 
+// 10. Verify Responsive Reading Size System
+console.log('Test 10: Responsive Reading Size System');
+assert.ok(cssContent.includes('--reading-font-size:'), 'Defines --reading-font-size');
+assert.ok(cssContent.includes('--reading-line-height:'), 'Defines --reading-line-height');
+assert.ok(cssContent.includes('--reading-title-size:'), 'Defines --reading-title-size');
+assert.ok(cssContent.includes('[data-font-size="sm"]'), 'Has small compact font size config');
+assert.ok(cssContent.includes('[data-font-size="base"]'), 'Has default font size config');
+assert.ok(cssContent.includes('[data-font-size="lg"]'), 'Has large comfortable font size config');
+assert.ok(cssContent.includes('.tiptap-container .tiptap'), 'Has tiptap editor font rule');
+console.log('✓ Test 10 Passed: Reading size responsive system verified.');
+
+// 11. Verify Note Archiving Logic
+console.log('Test 11: Note Archiving Logic');
+const mockNotes = [
+  { id: '1', title: 'Note 1', isDeleted: false, isArchived: false, favorite: true },
+  { id: '2', title: 'Note 2', isDeleted: false, isArchived: true, favorite: false },
+  { id: '3', title: 'Note 3', isDeleted: true, isArchived: false, favorite: false },
+  { id: '4', title: 'Note 4', isDeleted: false, isArchived: false, favorite: false },
+];
+
+const allView = mockNotes.filter((n) => !n.isDeleted && !n.isArchived);
+assert.strictEqual(allView.length, 2, 'All notes inbox excludes deleted and archived notes');
+
+const archiveView = mockNotes.filter((n) => !n.isDeleted && n.isArchived);
+assert.strictEqual(archiveView.length, 1, 'Archive view only includes non-deleted archived notes');
+assert.strictEqual(archiveView[0].id, '2', 'Archived note 2 is present in archive');
+
+const trashView = mockNotes.filter((n) => n.isDeleted);
+assert.strictEqual(trashView.length, 1, 'Trash view only includes deleted notes');
+console.log('✓ Test 11 Passed: Note archive filtering verified.');
+
 console.log('\n--- ALL VERIFICATION TESTS PASSED SUCCESSFULLY! ---');

@@ -7,7 +7,10 @@ import {
   BookOpen,
   Star,
   Trash2,
+  Archive,
   Settings,
+  Command,
+  Tag,
   Sun,
   Moon,
   Feather,
@@ -26,6 +29,7 @@ interface SidebarProps {
   onSelectNote: (id: string) => void;
   onCreateNote: () => void;
   onToggleFavorite: (id: string) => void;
+  onToggleArchive?: (id: string) => void;
   currentFilter: NoteFilter;
   onChangeFilter: (filter: NoteFilter) => void;
   currentTheme: ThemeId;
@@ -41,6 +45,7 @@ export default function Sidebar({
   onSelectNote,
   onCreateNote,
   onToggleFavorite,
+  onToggleArchive,
   currentFilter,
   onChangeFilter,
   currentTheme,
@@ -66,11 +71,15 @@ export default function Sidebar({
 
   // Counts
   const activeCount = useMemo(
-    () => notes.filter((n) => !n.isDeleted).length,
+    () => notes.filter((n) => !n.isDeleted && !n.isArchived).length,
     [notes]
   );
   const favoritesCount = useMemo(
-    () => notes.filter((n) => !n.isDeleted && n.favorite).length,
+    () => notes.filter((n) => !n.isDeleted && !n.isArchived && n.favorite).length,
+    [notes]
+  );
+  const archiveCount = useMemo(
+    () => notes.filter((n) => !n.isDeleted && n.isArchived).length,
     [notes]
   );
   const trashCount = useMemo(
@@ -85,11 +94,13 @@ export default function Sidebar({
         // Tab filter
         if (currentFilter === 'trash') {
           if (!note.isDeleted) return false;
+        } else if (currentFilter === 'archive') {
+          if (note.isDeleted || !note.isArchived) return false;
         } else if (currentFilter === 'favorites') {
-          if (note.isDeleted || !note.favorite) return false;
+          if (note.isDeleted || note.isArchived || !note.favorite) return false;
         } else {
           // 'all'
-          if (note.isDeleted) return false;
+          if (note.isDeleted || note.isArchived) return false;
         }
 
         // Tag filter
@@ -250,6 +261,34 @@ export default function Sidebar({
           </div>
           <span className="text-[11px] text-[var(--text-faint)] font-mono px-2 py-0.5 rounded-full bg-[var(--border-subtle)]/60">
             {favoritesCount}
+          </span>
+        </button>
+
+        <button
+          onClick={() => {
+            onChangeFilter('archive');
+            setSelectedTag(null);
+          }}
+          className={`group flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${
+            currentFilter === 'archive' && selectedTag === null
+              ? 'bg-[var(--bg-card-active)] text-[var(--text-main)] shadow-xs'
+              : 'text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-main)]'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <div
+              className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
+                currentFilter === 'archive' && selectedTag === null
+                  ? 'bg-[var(--accent-main)] text-[var(--accent-contrast)] shadow-2xs'
+                  : 'bg-[var(--border-subtle)]/70 text-[var(--text-muted)] group-hover:text-[var(--text-main)]'
+              }`}
+            >
+              <Archive className="w-3.5 h-3.5" />
+            </div>
+            <span className="font-medium">Archive</span>
+          </div>
+          <span className="text-[11px] text-[var(--text-faint)] font-mono px-2 py-0.5 rounded-full bg-[var(--border-subtle)]/60">
+            {archiveCount}
           </span>
         </button>
 

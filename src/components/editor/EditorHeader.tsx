@@ -5,6 +5,7 @@ import {
   Star,
   Download,
   Trash2,
+  Archive,
   Info,
   PanelLeftClose,
   PanelLeft,
@@ -20,6 +21,7 @@ interface EditorHeaderProps {
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   onToggleFavorite: () => void;
+  onToggleArchive?: () => void;
   onOpenExport: () => void;
   onOpenInfo: () => void;
   onDeleteNote: () => void;
@@ -35,6 +37,7 @@ export default function EditorHeader({
   sidebarOpen,
   onToggleSidebar,
   onToggleFavorite,
+  onToggleArchive,
   onOpenExport,
   onOpenInfo,
   onDeleteNote,
@@ -148,6 +151,22 @@ export default function EditorHeader({
         >
           <Download className="w-4 h-4" />
         </button>
+
+        {/* Archive toggle */}
+        {onToggleArchive && (
+          <button
+            onClick={onToggleArchive}
+            title={note.isArchived ? 'Unarchive note' : 'Archive note'}
+            className={`p-1.5 rounded-md transition-all active:scale-90 ${
+              note.isArchived
+                ? 'text-[var(--accent-main)] hover:opacity-80 bg-[var(--accent-subtle)]'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)]'
+            }`}
+            aria-label={note.isArchived ? 'Unarchive note' : 'Archive note'}
+          >
+            <Archive className="w-4 h-4" />
+          </button>
+        )}
 
         {/* Delete note */}
         <button

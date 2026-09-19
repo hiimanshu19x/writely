@@ -27,6 +27,7 @@ interface MobileHomeScreenProps {
   onSelectNote: (id: string) => void;
   onCreateNote: () => void;
   onToggleFavorite: (id: string) => void;
+  onToggleArchive: (id: string) => void;
   onDeleteNote: (id: string) => void;
   currentFilter: NoteFilter;
   onChangeFilter: (filter: NoteFilter) => void;
@@ -146,6 +147,7 @@ export default function MobileHomeScreen({
   onSelectNote,
   onCreateNote,
   onToggleFavorite,
+  onToggleArchive,
   onDeleteNote,
   currentFilter,
   onChangeFilter,
@@ -202,8 +204,9 @@ export default function MobileHomeScreen({
   };
 
   // Counts for pills
-  const allCount = useMemo(() => notes.filter((n) => !n.isDeleted).length, [notes]);
-  const favoritesCount = useMemo(() => notes.filter((n) => !n.isDeleted && n.favorite).length, [notes]);
+  const allCount = useMemo(() => notes.filter((n) => !n.isDeleted && !n.isArchived).length, [notes]);
+  const favoritesCount = useMemo(() => notes.filter((n) => !n.isDeleted && !n.isArchived && n.favorite).length, [notes]);
+  const archiveCount = useMemo(() => notes.filter((n) => !n.isDeleted && n.isArchived).length, [notes]);
   const trashCount = useMemo(() => notes.filter((n) => n.isDeleted).length, [notes]);
 
   // Filter notes
@@ -211,12 +214,14 @@ export default function MobileHomeScreen({
     let list = notes.slice();
 
     // Standard filter tabs
-    if (currentFilter === 'favorites') {
-      list = list.filter((n) => !n.isDeleted && n.favorite);
-    } else if (currentFilter === 'trash') {
+    if (currentFilter === 'trash') {
       list = list.filter((n) => n.isDeleted);
+    } else if (currentFilter === 'archive') {
+      list = list.filter((n) => !n.isDeleted && n.isArchived);
+    } else if (currentFilter === 'favorites') {
+      list = list.filter((n) => !n.isDeleted && !n.isArchived && n.favorite);
     } else {
-      list = list.filter((n) => !n.isDeleted);
+      list = list.filter((n) => !n.isDeleted && !n.isArchived);
     }
 
     // Tag filter
@@ -447,12 +452,26 @@ export default function MobileHomeScreen({
           {/* ARCHIVE */}
           <button
             onClick={() => {
+              onChangeFilter('archive');
               setSelectedTag(null);
             }}
-            className="h-10 px-4 rounded-2xl text-xs font-semibold flex items-center gap-2 shrink-0 bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all duration-200 active:scale-95"
+            className={`h-10 px-4 rounded-2xl text-xs font-semibold flex items-center gap-2 shrink-0 transition-all duration-200 active:scale-95 ${
+              currentFilter === 'archive' && !selectedTag
+                ? 'bg-[var(--accent-main)] text-[var(--accent-contrast)] shadow-xs shadow-[var(--accent-main)]/20'
+                : 'bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
+            }`}
           >
             <Archive className="w-3.5 h-3.5" />
             <span>Archive</span>
+            <span
+              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                currentFilter === 'archive' && !selectedTag
+                  ? 'bg-white/25 text-white'
+                  : 'bg-[var(--bg-card-hover)] text-[var(--text-muted)]'
+              }`}
+            >
+              {archiveCount}
+            </span>
           </button>
         </div>
 
@@ -665,6 +684,17 @@ export default function MobileHomeScreen({
 
                               <button
                                 onClick={() => {
+                                  onToggleArchive(note.id);
+                                  setMenuNoteId(null);
+                                }}
+                                className="w-full text-left px-3 py-2 hover:bg-[var(--bg-card-hover)] flex items-center gap-2"
+                              >
+                                <Archive className="w-3.5 h-3.5" />
+                                <span>{note.isArchived ? 'Unarchive Note' : 'Archive Note'}</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
                                   onDeleteNote(note.id);
                                   setMenuNoteId(null);
                                 }}
@@ -678,12 +708,15 @@ export default function MobileHomeScreen({
                         </div>
                       </div>
 
-                      {/* Excerpt */}
-                      <p className="text-xs text-[var(--text-muted)] line-clamp-2 leading-relaxed mt-1 mb-3">
+                      {/* Excerpt - Dynamically responsive to reading size */}
+                      <p
+                        style={{ fontSize: 'var(--reading-excerpt-size, 12px)' }}
+                        className="text-[var(--text-muted)] line-clamp-2 leading-relaxed mt-1 mb-3 transition-all"
+                      >
                         {note.plainText || 'No text content yet...'}
                       </p>
 
-                      {/* Footer Row: Tag Chip + Date */}
+                      {/* Footer Row: Tag Chip + Date + Status Badges */}
                       <div className="flex items-center gap-2 text-[11px] text-[var(--text-muted)]">
                         <span
                           style={{
@@ -694,6 +727,13 @@ export default function MobileHomeScreen({
                         >
                           #{cleanTag}
                         </span>
+
+                        {note.isArchived && (
+                          <span className="px-2 py-0.5 rounded-full bg-[var(--accent-subtle)] text-[var(--accent-main)] font-semibold text-[10px] flex items-center gap-1">
+                            <Archive className="w-2.5 h-2.5" />
+                            <span>Archived</span>
+                          </span>
+                        )}
 
                         <span>&bull;</span>
 

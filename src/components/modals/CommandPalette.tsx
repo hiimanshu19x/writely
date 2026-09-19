@@ -10,6 +10,7 @@ import {
   Upload,
   PanelLeft,
   Trash2,
+  Archive,
   FileText,
   Clock,
   ArrowRight,
@@ -32,6 +33,8 @@ interface CommandPaletteProps {
   onToggleSidebar: () => void;
   onDeleteCurrentNote: () => void;
   onViewTrash: () => void;
+  onViewArchive?: () => void;
+  onToggleArchiveNote?: () => void;
   onToggleFormatting?: () => void;
 }
 
@@ -50,6 +53,8 @@ export default function CommandPalette({
   onToggleSidebar,
   onDeleteCurrentNote,
   onViewTrash,
+  onViewArchive,
+  onToggleArchiveNote,
   onToggleFormatting,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
@@ -189,6 +194,18 @@ export default function CommandPalette({
         action: () => onToggleFormatting?.(),
       },
       {
+        id: 'cmd-archive',
+        title: 'View Archive',
+        icon: Archive,
+        action: () => onViewArchive?.(),
+      },
+      {
+        id: 'cmd-toggle-archive',
+        title: 'Archive / Unarchive current note',
+        icon: Archive,
+        action: () => onToggleArchiveNote?.(),
+      },
+      {
         id: 'cmd-trash',
         title: 'View Trash',
         icon: Trash2,
@@ -214,6 +231,8 @@ export default function CommandPalette({
     onImportDoc,
     onToggleSidebar,
     onViewTrash,
+    onViewArchive,
+    onToggleArchiveNote,
     onDeleteCurrentNote,
   ]);
 

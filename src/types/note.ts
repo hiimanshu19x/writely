@@ -37,9 +37,11 @@ export interface Note {
   deletedAt?: number | null;
   tags: string[];
   pinned?: boolean;
+  isArchived?: boolean;
+  archivedAt?: number | null;
 }
 
-export type NoteFilter = 'all' | 'favorites' | 'trash';
+export type NoteFilter = 'all' | 'favorites' | 'archive' | 'trash';
 
 export interface BackupData {
   version: number;

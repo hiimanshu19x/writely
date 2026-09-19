@@ -110,7 +110,7 @@ export default function Editor({
     editorProps: {
       attributes: {
         class:
-          'prose dark:prose-invert max-w-none focus:outline-none min-h-[500px] text-base leading-relaxed',
+          'prose dark:prose-invert max-w-none focus:outline-none min-h-[500px]',
       },
     },
     onUpdate: ({ editor }) => {
@@ -188,8 +188,8 @@ export default function Editor({
             onBlur={handleTitleBlur}
             onKeyDown={handleTitleKeyDown}
             placeholder="Untitled"
-            className="w-full text-3xl md:text-4xl font-bold tracking-tight bg-transparent border-none outline-none text-[var(--text-main)] placeholder:text-[var(--text-faint)] mb-6 transition-colors"
-            style={{ fontFamily: 'inherit' }}
+            className="w-full font-bold tracking-tight bg-transparent border-none outline-none text-[var(--text-main)] placeholder:text-[var(--text-faint)] mb-6 transition-all"
+            style={{ fontFamily: 'inherit', fontSize: 'var(--reading-title-size)' }}
           />
 
           {/* Tiptap Rich Text Content Area */}

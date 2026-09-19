@@ -56,20 +56,16 @@ export default function EditorHeader({
             <span className="text-lg leading-none">‹</span>
             <span>Notes</span>
           </button>
-        ) : (
+        ) : !sidebarOpen ? (
           <button
             onClick={onToggleSidebar}
-            title={sidebarOpen ? 'Hide sidebar (⌘\\)' : 'Show sidebar (⌘\\)'}
+            title="Show sidebar (⌘\)"
             className="p-1.5 rounded-md hover:bg-[var(--bg-card-hover)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
-            aria-label="Toggle sidebar"
+            aria-label="Open sidebar"
           >
-            {sidebarOpen ? (
-              <PanelLeftClose className="w-4 h-4" />
-            ) : (
-              <PanelLeft className="w-4 h-4" />
-            )}
+            <PanelLeft className="w-4 h-4" />
           </button>
-        )}
+        ) : null}
 
         {/* Autosave badge */}
         <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] select-none pl-2 border-l border-[var(--border-subtle)]">

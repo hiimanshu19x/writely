@@ -9,16 +9,12 @@ import {
   Trash2,
   Archive,
   Plus,
-  Home,
-  BarChart2,
-  Settings,
   Sun,
   Moon,
   MoreHorizontal,
   ChevronDown,
   Menu,
   Check,
-  Share2,
   X,
   ArrowRight,
 } from 'lucide-react';
@@ -36,62 +32,98 @@ interface MobileHomeScreenProps {
   onChangeTheme: (theme: ThemeId) => void;
   onOpenSettings: () => void;
   onOpenCommandPalette: () => void;
-  onOpenStats: () => void;
-  onOpenEditor: () => void;
+  onOpenStats?: () => void;
+  onOpenEditor?: () => void;
+}
+
+interface TagColorConfig {
+  bg: string;
+  text: string;
+  stripe: string;
+  border: string;
+  darkBg: string;
+  darkText: string;
+  darkStripe: string;
 }
 
 // Preset pastel tag color palettes matching reference UI
-const TAG_COLOR_PALETTES: Record<string, { bg: string; text: string; stripe: string; darkBg: string; darkText: string }> = {
+const TAG_COLOR_PALETTES: Record<string, TagColorConfig> = {
   personal: {
     bg: '#FCE8DE',
     text: '#8B482B',
-    stripe: '#C26D45',
+    stripe: '#D96538',
+    border: '#F8D3C1',
     darkBg: '#3B241C',
     darkText: '#F5BEAA',
+    darkStripe: '#E07D54',
   },
   work: {
     bg: '#E1F0FF',
     text: '#1E56A0',
-    stripe: '#3B82F6',
+    stripe: '#2563EB',
+    border: '#C5E2FF',
     darkBg: '#152942',
     darkText: '#93C5FD',
+    darkStripe: '#60A5FA',
   },
   ideas: {
     bg: '#E3F6EC',
     text: '#226E46',
-    stripe: '#10B981',
+    stripe: '#059669',
+    border: '#C5F0DA',
     darkBg: '#163826',
     darkText: '#86EFAC',
+    darkStripe: '#34D399',
   },
   travel: {
     bg: '#EFE8FC',
     text: '#5E3FA2',
-    stripe: '#8B5CF6',
+    stripe: '#7C3AED',
+    border: '#DDD1F8',
     darkBg: '#281E42',
     darkText: '#C4B5FD',
+    darkStripe: '#A78BFA',
   },
   books: {
     bg: '#F4EFE6',
     text: '#6B5738',
     stripe: '#D97706',
+    border: '#E8DDCB',
     darkBg: '#352D21',
     darkText: '#E9D5BD',
-  },
-  guide: {
-    bg: '#E2F2FE',
-    text: '#0369A1',
-    stripe: '#0284C7',
-    darkBg: '#0F2C45',
-    darkText: '#7DD3FC',
+    darkStripe: '#FBBF24',
   },
   welcome: {
     bg: '#FCE8DE',
     text: '#8B482B',
-    stripe: '#C26D45',
+    stripe: '#D96538',
+    border: '#F8D3C1',
     darkBg: '#3B241C',
     darkText: '#F5BEAA',
+    darkStripe: '#E07D54',
+  },
+  guide: {
+    bg: '#E1F0FF',
+    text: '#1E56A0',
+    stripe: '#2563EB',
+    border: '#C5E2FF',
+    darkBg: '#152942',
+    darkText: '#93C5FD',
+    darkStripe: '#60A5FA',
   },
 };
+
+// Dynamic color generator for any arbitrary tag
+const FALLBACK_PALETTES: TagColorConfig[] = [
+  { bg: '#FCE8DE', text: '#8B482B', stripe: '#D96538', border: '#F8D3C1', darkBg: '#3B241C', darkText: '#F5BEAA', darkStripe: '#E07D54' },
+  { bg: '#E1F0FF', text: '#1E56A0', stripe: '#2563EB', border: '#C5E2FF', darkBg: '#152942', darkText: '#93C5FD', darkStripe: '#60A5FA' },
+  { bg: '#E3F6EC', text: '#226E46', stripe: '#059669', border: '#C5F0DA', darkBg: '#163826', darkText: '#86EFAC', darkStripe: '#34D399' },
+  { bg: '#EFE8FC', text: '#5E3FA2', stripe: '#7C3AED', border: '#DDD1F8', darkBg: '#281E42', darkText: '#C4B5FD', darkStripe: '#A78BFA' },
+  { bg: '#F4EFE6', text: '#6B5738', stripe: '#D97706', border: '#E8DDCB', darkBg: '#352D21', darkText: '#E9D5BD', darkStripe: '#FBBF24' },
+  { bg: '#FCE7F3', text: '#9D174D', stripe: '#DB2777', border: '#FBCFE8', darkBg: '#3C1828', darkText: '#F472B6', darkStripe: '#F472B6' },
+  { bg: '#E0F2FE', text: '#075985', stripe: '#0284C7', border: '#BAE6FD', darkBg: '#112C3E', darkText: '#38BDF8', darkStripe: '#38BDF8' },
+  { bg: '#CCFBF1', text: '#115E59', stripe: '#0D9488', border: '#99F6E4', darkBg: '#133532', darkText: '#2DD4BF', darkStripe: '#2DD4BF' },
+];
 
 const DEFAULT_TAGS = ['personal', 'work', 'ideas', 'travel', 'books'];
 
@@ -119,12 +151,9 @@ export default function MobileHomeScreen({
   onChangeTheme,
   onOpenSettings,
   onOpenCommandPalette,
-  onOpenStats,
-  onOpenEditor,
 }: MobileHomeScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'notes' | 'stats' | 'settings'>('home');
   const [menuNoteId, setMenuNoteId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'updated' | 'created' | 'title'>('updated');
   const [showSortMenu, setShowSortMenu] = useState(false);
@@ -141,7 +170,10 @@ export default function MobileHomeScreen({
     const set = new Set<string>(DEFAULT_TAGS);
     notes.forEach((n) => {
       if (!n.isDeleted && n.tags) {
-        n.tags.forEach((t) => set.add(t.toLowerCase()));
+        n.tags.forEach((t) => {
+          const clean = t.replace(/^#/, '').trim().toLowerCase();
+          if (clean) set.add(clean);
+        });
       }
     });
     return Array.from(set);
@@ -167,7 +199,12 @@ export default function MobileHomeScreen({
 
     // Tag filter
     if (selectedTag) {
-      list = list.filter((n) => n.tags && n.tags.some((t) => t.toLowerCase() === selectedTag.toLowerCase()));
+      const targetTag = selectedTag.replace(/^#/, '').trim().toLowerCase();
+      list = list.filter(
+        (n) =>
+          n.tags &&
+          n.tags.some((t) => t.replace(/^#/, '').trim().toLowerCase() === targetTag)
+      );
     }
 
     // Search query filter
@@ -219,34 +256,40 @@ export default function MobileHomeScreen({
     });
   };
 
-  // Get harmonic tag styles
-  const getTagStyle = (tag: string) => {
-    const key = tag.toLowerCase();
-    return (
-      TAG_COLOR_PALETTES[key] || {
-        bg: '#F3EFEA',
-        text: '#6B5738',
-        stripe: '#B4603B',
-        darkBg: '#2E2721',
-        darkText: '#DBC5B0',
-      }
-    );
+  // Get harmonic tag styles deterministically
+  const getTagStyle = (rawTag: string): TagColorConfig => {
+    const key = rawTag.replace(/^#/, '').trim().toLowerCase();
+    if (TAG_COLOR_PALETTES[key]) {
+      return TAG_COLOR_PALETTES[key];
+    }
+    // Deterministic hash code for any custom tag
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+      hash = key.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % FALLBACK_PALETTES.length;
+    return FALLBACK_PALETTES[index];
   };
 
   const isDarkTheme = ['dark', 'oled', 'midnight', 'nordic'].includes(currentTheme);
 
   return (
-    <div className="w-full h-full flex flex-col bg-[var(--bg-app)] text-[var(--text-main)] select-none relative overflow-hidden font-sans">
+    <div
+      style={{
+        fontFamily: 'var(--font-sf-pro, -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", sans-serif)',
+      }}
+      className="w-full h-full flex flex-col bg-[var(--bg-app)] text-[var(--text-main)] select-none relative overflow-hidden"
+    >
       {/* SCROLLABLE MAIN CONTENT AREA */}
-      <div className="flex-1 overflow-y-auto px-5 pt-4 pb-32 space-y-6">
+      <div className="flex-1 overflow-y-auto px-5 pt-4 pb-28 space-y-6">
         {/* 1. TOP HEADER & BRAND */}
         <div className="flex items-center justify-between pt-2">
           <div>
-            <h1 className="text-3xl md:text-4xl font-serif font-medium tracking-tight text-[var(--text-main)] leading-none">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-[var(--text-main)] leading-none">
               Writely
             </h1>
-            <p className="text-xs italic font-serif text-[var(--text-muted)] mt-1 tracking-wide">
-              A quieter mind, a brighter you.
+            <p className="text-xs text-[var(--text-muted)] font-normal mt-1.5 tracking-tight">
+              Distraction-free thoughts
             </p>
           </div>
 
@@ -264,7 +307,7 @@ export default function MobileHomeScreen({
             <button
               onClick={onOpenSettings}
               title="Open Settings"
-              className="w-10 h-10 rounded-full bg-[var(--accent-main)] text-[var(--accent-contrast)] flex items-center justify-center font-serif text-base font-semibold shadow-xs ring-2 ring-black/5 dark:ring-white/10 transition-transform duration-200 active:scale-95"
+              className="w-10 h-10 rounded-full bg-[var(--accent-main)] text-[var(--accent-contrast)] flex items-center justify-center text-base font-bold shadow-xs ring-2 ring-black/5 dark:ring-white/10 transition-transform duration-200 active:scale-95"
             >
               W
             </button>
@@ -301,15 +344,18 @@ export default function MobileHomeScreen({
           </div>
         </div>
 
-        {/* 3. FILTER PILLS (Horizontal Scroll) */}
-        <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-1 -mx-5 px-5">
+        {/* 3. FILTER PILLS (Horizontal Scroll - Completely Hidden Scrollbars) */}
+        <div
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-1 -mx-5 px-5"
+        >
           {/* ALL NOTES */}
           <button
             onClick={() => {
               onChangeFilter('all');
               setSelectedTag(null);
             }}
-            className={`h-10 px-4 rounded-2xl text-xs font-medium flex items-center gap-2 shrink-0 transition-all duration-200 active:scale-95 ${
+            className={`h-10 px-4 rounded-2xl text-xs font-semibold flex items-center gap-2 shrink-0 transition-all duration-200 active:scale-95 ${
               currentFilter === 'all' && !selectedTag
                 ? 'bg-[var(--accent-main)] text-[var(--accent-contrast)] shadow-xs shadow-[var(--accent-main)]/20'
                 : 'bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
@@ -318,7 +364,7 @@ export default function MobileHomeScreen({
             <FileText className="w-3.5 h-3.5" />
             <span>All</span>
             <span
-              className={`px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${
+              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
                 currentFilter === 'all' && !selectedTag
                   ? 'bg-white/20 text-[var(--accent-contrast)]'
                   : 'bg-[var(--bg-card-hover)] text-[var(--text-muted)]'
@@ -334,7 +380,7 @@ export default function MobileHomeScreen({
               onChangeFilter('favorites');
               setSelectedTag(null);
             }}
-            className={`h-10 px-4 rounded-2xl text-xs font-medium flex items-center gap-2 shrink-0 transition-all duration-200 active:scale-95 ${
+            className={`h-10 px-4 rounded-2xl text-xs font-semibold flex items-center gap-2 shrink-0 transition-all duration-200 active:scale-95 ${
               currentFilter === 'favorites'
                 ? 'bg-[var(--accent-main)] text-[var(--accent-contrast)] shadow-xs shadow-[var(--accent-main)]/20'
                 : 'bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
@@ -343,7 +389,7 @@ export default function MobileHomeScreen({
             <Star className={`w-3.5 h-3.5 ${currentFilter === 'favorites' ? 'fill-current' : ''}`} />
             <span>Favorites</span>
             <span
-              className={`px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${
+              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
                 currentFilter === 'favorites'
                   ? 'bg-white/20 text-[var(--accent-contrast)]'
                   : 'bg-[var(--bg-card-hover)] text-[var(--text-muted)]'
@@ -359,7 +405,7 @@ export default function MobileHomeScreen({
               onChangeFilter('trash');
               setSelectedTag(null);
             }}
-            className={`h-10 px-4 rounded-2xl text-xs font-medium flex items-center gap-2 shrink-0 transition-all duration-200 active:scale-95 ${
+            className={`h-10 px-4 rounded-2xl text-xs font-semibold flex items-center gap-2 shrink-0 transition-all duration-200 active:scale-95 ${
               currentFilter === 'trash'
                 ? 'bg-[var(--danger-main)] text-white shadow-xs'
                 : 'bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
@@ -368,7 +414,7 @@ export default function MobileHomeScreen({
             <Trash2 className="w-3.5 h-3.5" />
             <span>Trash</span>
             <span
-              className={`px-1.5 py-0.5 rounded-md text-[10px] font-semibold ${
+              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
                 currentFilter === 'trash' ? 'bg-white/25 text-white' : 'bg-[var(--bg-card-hover)] text-[var(--text-muted)]'
               }`}
             >
@@ -376,23 +422,22 @@ export default function MobileHomeScreen({
             </span>
           </button>
 
-          {/* ARCHIVE / READ-ONLY PLACEHOLDER */}
+          {/* ARCHIVE */}
           <button
             onClick={() => {
-              // Toggle tag or clear filter
               setSelectedTag(null);
             }}
-            className="h-10 px-4 rounded-2xl text-xs font-medium flex items-center gap-2 shrink-0 bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all duration-200 active:scale-95"
+            className="h-10 px-4 rounded-2xl text-xs font-semibold flex items-center gap-2 shrink-0 bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all duration-200 active:scale-95"
           >
             <Archive className="w-3.5 h-3.5" />
             <span>Archive</span>
           </button>
         </div>
 
-        {/* 4. TAGS SECTION */}
+        {/* 4. TAGS SECTION (Horizontal Scroll - Completely Hidden Scrollbars) */}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-serif font-medium text-[var(--text-main)]">
+            <h2 className="text-base font-semibold text-[var(--text-main)]">
               Tags
             </h2>
             <button
@@ -404,7 +449,10 @@ export default function MobileHomeScreen({
             </button>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-5 px-5">
+          <div
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-5 px-5"
+          >
             {availableTags.map((tag) => {
               const style = getTagStyle(tag);
               const isSelected = selectedTag === tag;
@@ -416,8 +464,8 @@ export default function MobileHomeScreen({
                     backgroundColor: isDarkTheme ? style.darkBg : style.bg,
                     color: isDarkTheme ? style.darkText : style.text,
                   }}
-                  className={`h-8 px-3.5 rounded-full text-xs font-medium tracking-wide flex items-center gap-1 shrink-0 transition-all duration-200 active:scale-95 ${
-                    isSelected ? 'ring-2 ring-offset-2 ring-[var(--accent-main)] font-semibold' : 'opacity-95 hover:opacity-100'
+                  className={`h-8 px-3.5 rounded-full text-xs font-semibold tracking-wide flex items-center gap-1 shrink-0 transition-all duration-200 active:scale-95 ${
+                    isSelected ? 'ring-2 ring-offset-2 ring-[var(--accent-main)] shadow-xs' : 'opacity-95 hover:opacity-100'
                   }`}
                 >
                   <span>#{tag}</span>
@@ -439,7 +487,7 @@ export default function MobileHomeScreen({
         {/* 5. RECENT NOTES SECTION */}
         <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-serif font-medium text-[var(--text-main)]">
+            <h2 className="text-lg font-semibold text-[var(--text-main)]">
               {currentFilter === 'trash'
                 ? 'Trashed Notes'
                 : currentFilter === 'favorites'
@@ -518,15 +566,15 @@ export default function MobileHomeScreen({
             </div>
           </div>
 
-          {/* NOTES LIST CARDS */}
+          {/* NOTES LIST CARDS - PROMINENTLY COLORED ACCORDING TO TAGS */}
           {filteredNotes.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[var(--border-subtle)] p-8 text-center bg-[var(--bg-card)]/50">
-              <p className="text-sm font-serif italic text-[var(--text-muted)] mb-3">
+              <p className="text-sm italic text-[var(--text-muted)] mb-3">
                 No notes found in this view.
               </p>
               <button
                 onClick={onCreateNote}
-                className="px-4 py-2 rounded-xl bg-[var(--accent-main)] text-[var(--accent-contrast)] text-xs font-medium shadow-xs"
+                className="px-4 py-2 rounded-xl bg-[var(--accent-main)] text-[var(--accent-contrast)] text-xs font-semibold shadow-xs"
               >
                 Create a new note
               </button>
@@ -534,9 +582,12 @@ export default function MobileHomeScreen({
           ) : (
             <div className="space-y-3">
               {filteredNotes.map((note) => {
-                const primaryTag = note.tags && note.tags.length > 0 ? note.tags[0] : 'personal';
-                const tagStyle = getTagStyle(primaryTag);
+                // Determine primary tag
+                const rawTag = note.tags && note.tags.length > 0 ? note.tags[0] : 'personal';
+                const cleanTag = rawTag.replace(/^#/, '').trim().toLowerCase();
+                const tagStyle = getTagStyle(cleanTag);
                 const isMenuOpen = menuNoteId === note.id;
+                const stripeColor = isDarkTheme ? tagStyle.darkStripe : tagStyle.stripe;
 
                 return (
                   <div
@@ -544,17 +595,17 @@ export default function MobileHomeScreen({
                     onClick={() => onSelectNote(note.id)}
                     className="relative group rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] p-4 shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.99] cursor-pointer flex gap-3.5"
                   >
-                    {/* Left Colored Accent Bar */}
+                    {/* Prominent Colored Accent Indicator Bar */}
                     <div
-                      style={{ backgroundColor: tagStyle.stripe }}
-                      className="w-1 rounded-full self-stretch shrink-0 opacity-90"
+                      style={{ backgroundColor: stripeColor }}
+                      className="w-1.5 rounded-full self-stretch shrink-0"
                     />
 
                     {/* Card Content */}
                     <div className="flex-1 min-w-0">
                       {/* Top Row: Title + Action Button */}
                       <div className="flex items-center justify-between gap-2">
-                        <h3 className="text-[15px] font-semibold text-[var(--text-main)] truncate leading-snug">
+                        <h3 className="text-[15px] font-bold text-[var(--text-main)] truncate leading-snug">
                           {note.title || 'Untitled note'}
                         </h3>
 
@@ -609,9 +660,9 @@ export default function MobileHomeScreen({
                             backgroundColor: isDarkTheme ? tagStyle.darkBg : tagStyle.bg,
                             color: isDarkTheme ? tagStyle.darkText : tagStyle.text,
                           }}
-                          className="px-2.5 py-0.5 rounded-full font-medium tracking-tight text-[10px]"
+                          className="px-2.5 py-0.5 rounded-full font-bold tracking-tight text-[10px]"
                         >
-                          #{primaryTag}
+                          #{cleanTag}
                         </span>
 
                         <span>&bull;</span>
@@ -627,83 +678,14 @@ export default function MobileHomeScreen({
         </div>
       </div>
 
-      {/* 6. FLOATING ACTION BUTTON (FAB) FOR NEW NOTE */}
+      {/* 6. FLOATING ACTION BUTTON (FAB) FOR NEW NOTE (Positioned Cleanly at Bottom Right) */}
       <button
         onClick={onCreateNote}
         title="Create new note"
-        className="fixed bottom-20 right-5 z-30 w-14 h-14 rounded-full bg-[var(--accent-main)] text-[var(--accent-contrast)] shadow-lg shadow-[var(--accent-main)]/35 flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 ring-4 ring-black/5 dark:ring-white/10"
+        className="fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full bg-[var(--accent-main)] text-[var(--accent-contrast)] shadow-lg shadow-[var(--accent-main)]/35 flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 ring-4 ring-black/5 dark:ring-white/10"
       >
         <Plus className="w-6 h-6 stroke-[2.5]" />
       </button>
-
-      {/* 7. FIXED BOTTOM NAVIGATION BAR */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--bg-app)]/90 backdrop-blur-xl border-t border-[var(--border-subtle)] pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-2 px-6">
-        <div className="grid grid-cols-4 items-center">
-          {/* HOME TAB */}
-          <button
-            onClick={() => setActiveTab('home')}
-            className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-              activeTab === 'home'
-                ? 'text-[var(--accent-main)] font-semibold'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-            }`}
-          >
-            <Home className="w-5 h-5 stroke-[2.2]" />
-            <span className="text-[11px]">Home</span>
-            {activeTab === 'home' && (
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-main)] mt-[-2px]" />
-            )}
-          </button>
-
-          {/* NOTES TAB */}
-          <button
-            onClick={() => {
-              setActiveTab('notes');
-              onOpenEditor();
-            }}
-            className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-              activeTab === 'notes'
-                ? 'text-[var(--accent-main)] font-semibold'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-            }`}
-          >
-            <FileText className="w-5 h-5 stroke-[2.2]" />
-            <span className="text-[11px]">Notes</span>
-          </button>
-
-          {/* STATS TAB */}
-          <button
-            onClick={() => {
-              setActiveTab('stats');
-              onOpenStats();
-            }}
-            className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-              activeTab === 'stats'
-                ? 'text-[var(--accent-main)] font-semibold'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-            }`}
-          >
-            <BarChart2 className="w-5 h-5 stroke-[2.2]" />
-            <span className="text-[11px]">Stats</span>
-          </button>
-
-          {/* SETTINGS TAB */}
-          <button
-            onClick={() => {
-              setActiveTab('settings');
-              onOpenSettings();
-            }}
-            className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-              activeTab === 'settings'
-                ? 'text-[var(--accent-main)] font-semibold'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-            }`}
-          >
-            <Settings className="w-5 h-5 stroke-[2.2]" />
-            <span className="text-[11px]">Settings</span>
-          </button>
-        </div>
-      </nav>
     </div>
   );
 }

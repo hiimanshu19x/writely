@@ -473,11 +473,12 @@ export default function MobileHomeScreen({
 
           <div
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-5 px-5"
+            className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-5 px-5"
           >
             {availableTags.map((tag) => {
               const style = getTagStyle(tag);
               const isSelected = selectedTag === tag;
+              const stripeColor = isDarkTheme ? style.darkStripe : style.stripe;
               return (
                 <button
                   key={tag}
@@ -485,11 +486,18 @@ export default function MobileHomeScreen({
                   style={{
                     backgroundColor: isDarkTheme ? style.darkBg : style.bg,
                     color: isDarkTheme ? style.darkText : style.text,
+                    border: isSelected ? `2px solid ${stripeColor}` : '2px solid transparent',
                   }}
-                  className={`h-8 px-3.5 rounded-full text-xs font-semibold tracking-wide flex items-center gap-1 shrink-0 transition-all duration-200 active:scale-95 ${
-                    isSelected ? 'ring-2 ring-offset-2 ring-[var(--accent-main)] shadow-xs' : 'opacity-95 hover:opacity-100'
+                  className={`h-8 px-3.5 rounded-full text-xs font-semibold tracking-wide flex items-center gap-1.5 shrink-0 transition-all duration-200 active:scale-95 ${
+                    isSelected ? 'shadow-xs scale-[1.02]' : 'opacity-90 hover:opacity-100'
                   }`}
                 >
+                  {isSelected && (
+                    <span
+                      style={{ backgroundColor: stripeColor }}
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                    />
+                  )}
                   <span>#{tag}</span>
                 </button>
               );
@@ -798,10 +806,10 @@ export default function MobileHomeScreen({
                       }}
                       style={{
                         backgroundColor: isDarkTheme ? style.darkBg : style.bg,
-                        borderColor: isSelected ? stripeColor : isDarkTheme ? 'transparent' : style.border,
+                        border: isSelected ? `2px solid ${stripeColor}` : isDarkTheme ? '1.5px solid transparent' : `1.5px solid ${style.border}`,
                       }}
-                      className={`relative p-3.5 rounded-2xl border flex flex-col justify-between text-left transition-all duration-200 active:scale-95 shadow-xs hover:shadow-md ${
-                        isSelected ? 'ring-2 ring-offset-2 ring-[var(--accent-main)] shadow-sm' : ''
+                      className={`relative p-3.5 rounded-2xl flex flex-col justify-between text-left transition-all duration-200 active:scale-95 shadow-xs hover:shadow-md ${
+                        isSelected ? 'shadow-sm' : ''
                       }`}
                     >
                       {/* Top row: tag accent dot & selected checkmark */}
